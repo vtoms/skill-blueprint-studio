@@ -1,0 +1,17 @@
+{
+  "name": "agentic-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Visual authoring of reviewable skill workflows",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node studio/serve.mjs",
+    "build": "node studio/build.mjs",
+    "test": "node --test studio/core.test.mjs studio/independent-review.test.mjs studio/serve.test.mjs",
+    "examples": "node studio/make-examples.mjs"
+  }
+}
