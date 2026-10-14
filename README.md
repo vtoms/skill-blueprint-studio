@@ -10,6 +10,10 @@ Choose **Add skill**, then **Create a fresh skill** or **Import an existing skil
 
 The editor opens in **Step by step**. Switch to **List** or the optional **Canvas** view to work with the same skill, steps, facets, references, and rules. The canvas currently represents a sequential process. Free graph connections and executable branching are not implemented.
 
+Edit the selected step in the shared detail panel: **Contract**, **Inside**, **Example**, and **Source** for imported steps. Text changes save as you type. View changes preserve the selected step and expanded facets. Canvas cards show the main steps and their input/output contracts; inner functions and files stay inside the step. List provides a compact overview, and Step by step provides a navigation rail alongside the same editor.
+
+Canvas offers an insertion point between every pair of steps. Use the order buttons, or Alt+Up/Down on a focused Canvas card or List step, to reorder. When insertion, deletion, or movement changes an existing step's predecessor, its **Input changed** check records the earlier contract and survives reload and backups. Review the affected instructions and confirm that the new input fits before export. Undo restores both the order and review state. **Show Markdown** previews the current draft through the actual package compiler.
+
 Use the project breadcrumb or **Project skills** to return to the skill list, and **Projects** to return to the directory. The demo is an explicit **Explore the demo** option.
 
 ## Run locally
@@ -28,7 +32,8 @@ You can also open `studio/dist/skill-blueprint-studio.html` directly for authori
 ## What you can do
 
 - Organize multiple skills inside projects, with a project directory and skill list.
-- Work in Canvas, List, or Step-by-step views; add and reorder steps with explicit inputs and outputs.
+- Edit step contracts and inner facets directly in Canvas, List, or Step-by-step views; insert and reorder steps with explicit inputs and outputs.
+- Resolve a local rule override by using the shared value, updating the shared rule after reviewing its uses, or creating a separate rule.
 - Define inner functions, decisions, tool contracts, exceptions, shared rules, and references.
 - Specify input fields, output columns, presentation rules, and illustrative screen data.
 - Import Markdown or a skill ZIP, retain complete original bytes, and review heading-based proposed steps.

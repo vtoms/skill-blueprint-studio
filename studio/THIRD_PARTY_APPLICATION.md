@@ -4,6 +4,8 @@ The application-specific HTML, CSS, JavaScript, workflow model, canvas, import/e
 
 This inventory describes the project's source and dependencies; it is not a guarantee that every generated expression is unique.
 
+An external design assessment informed the editor layout. The application's implementation was authored separately; the assessment's exported prototype, custom elements, support script, and remote fonts are not included in this repository.
+
 | Component | Use | License and distribution |
 |---|---|---|
 | Project application code | UI, model, compiler, parser orchestration, review gate, and tooling | MIT; see the root LICENSE |
