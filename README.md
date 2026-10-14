@@ -18,16 +18,18 @@ Use the project breadcrumb or **Project skills** to return to the skill list, an
 
 ## Run locally
 
-Requirements: Node.js 24 or later, Python 3.12 or later, and a modern browser. No package installation or API key is needed.
+Requirements: Node.js 24.15 or later, Python 3.12 or later for source analysis, and a modern browser. No npm/pip package installation or API key is needed. The server uses Node's built-in SQLite module.
 
 ```sh
 npm run build
 npm start
 ```
 
-Open http://127.0.0.1:8766. The server listens on loopback only. Set `STUDIO_PORT` to choose another port. Set `STUDIO_PYTHON` to a Python executable path if needed; otherwise the server uses `python` on Windows and `python3` elsewhere.
+Open http://127.0.0.1:8766. The server listens on loopback only. On first start it copies the supplied empty database template to `.local-data/workspace.sqlite`. All browsers using this server load that same database. Existing working databases survive builds and server restarts.
 
-You can also open `studio/dist/skill-blueprint-studio.html` directly for authoring. Automated source analysis requires the local server.
+Set `STUDIO_PORT` to choose another port and `STUDIO_DATA_DIR` to select a writable database folder. Set `STUDIO_PYTHON` to a Python executable path if needed; otherwise the server uses `python` on Windows and `python3` elsewhere. Keep the data folder outside `studio/`, which is the server's static file root.
+
+Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitly labelled memory-only preview. It does not save work to a browser or a database; download a backup before closing. Durable storage and source analysis require the local server.
 
 ## What you can do
 
@@ -47,11 +49,15 @@ You can also open `studio/dist/skill-blueprint-studio.html` directly for authori
 
 ## Saving and backups
 
-Projects and their skills autosave in this browser on this device. **Back up project** downloads every skill in the selected project as a `.blueprint.json` file. **Back up projects** on the directory downloads the whole workspace. **Back up this skill** in Review & export keeps the individual `.agentic.json` format.
+Projects and skills autosave to the local SQLite database through the server. **Saved to local database** appears after the server acknowledges a committed write. **Saving**, **Changes not saved**, and **Save conflict** distinguish pending or failed writes. Text edits are grouped into saves; avoid closing while a save is pending.
 
-**Restore project** accepts a project, workspace, or older single-skill backup and adds recovered projects without overwriting existing ones. **Restore a skill backup** adds an individual backup to the current project. Earlier locally saved drafts are migrated into a **Recovered drafts** project; the app still opens on Projects.
+**Back up project** downloads every skill in the selected project as a `.blueprint.json` file. **Back up projects** on the directory downloads the whole workspace. **Back up this skill** in Review & export keeps the individual `.agentic.json` format. Backups include the current working copy, so unsaved changes can be preserved after a connection failure or conflict.
 
-Browser storage has capacity limits, especially with large imported assets. If autosave fails, the app keeps the current in-memory edits and asks you to download a backup. Unreadable saved data is preserved for recovery rather than silently overwritten.
+**Restore project** accepts a project, workspace, or older single-skill backup and adds recovered projects without overwriting existing ones. **Restore a skill backup** adds an individual backup to the current project. When earlier browser data exists, **Review browser data** lets you inspect and copy it into the database. It is never imported automatically, and its original browser copy is retained. The old version may have saved an untouched demo; copying it is optional.
+
+Concurrent browser sessions use revision checks. A stale session cannot overwrite newer saved data: back up its unsaved changes, then **Reload database** to use the current saved projects. Failed writes retain the working copy for retry or backup. A failed initial database load cannot overwrite saved projects with an empty workspace.
+
+Git distributes application code and the empty database template. It does not sync working projects between computers. Use workspace backup/restore to move projects, or transfer the complete data folder while the server is stopped. The working database and journal files are ignored by Git. Read the [storage and migration guide](docs/STORAGE.md) for database location, snapshots, recovery, and transfer details.
 
 ## Independent review of imports
 
@@ -79,10 +85,14 @@ This is an authoring prototype, not a workflow execution service. It does not pr
 
 Imports propose steps from Markdown headings. Source analysis drafts behavior contracts; parsing coverage does not prove semantic equivalence. HTML layout, styling, interactions, dynamic library behavior, and embedded native or macro code can require manual specifications and review. Structural asset inventories do not infer domain meaning or recalculate workbooks.
 
-Projects are saved in browser storage; download backups to keep a portable copy. Archive input is limited to 120 entries, 2 MB per file, and 8 MB total. Individual skill backups are limited to 32 MB, project backups to 64 MB, and workspace backups to 128 MB.
+Projects are stored in a local database. This release is a local single-workspace application; it does not provide accounts, cloud sync, collaborative merging, or shared storage between separate servers. Reload to see another browser's saved changes. Archive input is limited to 120 entries, 2 MB per file, and 8 MB total. Individual skill backups are limited to 32 MB, project backups to 64 MB, and workspace backups to 128 MB.
 
 ## Code and license
 
-The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, server, and build tooling were authored for this project. There are no installed third-party application dependencies or vendored UI components. The browser, Node.js, and Python provide platform APIs.
+The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database adapter, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. The browser, Node.js, and Python provide the other platform APIs.
 
 The application is licensed under [MIT](LICENSE). See [the provenance and runtime inventory](studio/THIRD_PARTY_APPLICATION.md). Runtime binaries are not distributed with this repository.
+
+## Development and validation
+
+Run `npm test` for the workflow, review, database, persistence, and HTTP tests. Run `npm run test:analyzer` for Python analyzer tests (`python3` may be required on some systems). Set `STUDIO_PYTHON` before running `npm test` when Python is not on PATH. `npm run db:template` regenerates only the empty database template; ordinary builds never touch the working database. See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and the [changelog](CHANGELOG.md).

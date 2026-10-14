@@ -1,17 +1,19 @@
 {
   "name": "skill-blueprint-studio",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "license": "MIT",
   "description": "Visual authoring of reviewable skill workflows",
   "engines": {
-    "node": ">=24"
+    "node": ">=24.15.0"
   },
   "scripts": {
     "start": "node studio/serve.mjs",
     "build": "node studio/build.mjs",
-    "test": "node --test studio/core.test.mjs studio/independent-review.test.mjs studio/workspace.test.mjs studio/workflow-order.test.mjs studio/serve.test.mjs",
+    "test": "node --test studio/core.test.mjs studio/independent-review.test.mjs studio/workspace.test.mjs studio/workflow-order.test.mjs studio/workspace-database.test.mjs studio/persistence.test.mjs studio/serve.test.mjs",
+    "test:analyzer": "python -m unittest discover -s studio -p analyze_sources_test.py",
+    "db:template": "node studio/make-database-template.mjs",
     "examples": "node studio/make-examples.mjs"
   }
 }

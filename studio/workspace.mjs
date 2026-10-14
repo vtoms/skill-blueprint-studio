@@ -44,7 +44,9 @@ export function readWorkspace(text){
   if(value?.type!==WORKSPACE_TYPE||value.schemaVersion!==1||!Array.isArray(value.projects)||value.projects.length>200)throw new Error('This is not a workspace backup.');
   const projects=value.projects.map(checkedWorkspaceProject);
   if(new Set(projects.map(container=>container.id)).size!==projects.length)throw new Error('Project identities must be unique.');
-  return {type:WORKSPACE_TYPE,schemaVersion:1,projects};
+  const result={type:WORKSPACE_TYPE,schemaVersion:1,projects};
+  if(value.browserImports!==undefined){if(!Array.isArray(value.browserImports)||value.browserImports.length>200||value.browserImports.some(digest=>typeof digest!=='string'||!/^[a-f0-9]{64}$/.test(digest)))throw new Error('Invalid browser migration record.');result.browserImports=[...new Set(value.browserImports)];}
+  return result;
 }
 export function workspaceProjectBackup(container){return {type:PROJECT_TYPE,schemaVersion:1,project:copy(container)};}
 export function readWorkspaceProjectBackup(text){

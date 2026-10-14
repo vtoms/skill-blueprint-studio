@@ -1,3 +1,4 @@
+import {createWorkspacePersistence} from './persistence.mjs';
 import {WORKSPACE_STORE,LEGACY_SKILL_STORE,emptyWorkspace,createWorkspaceProject,addWorkspaceProject,workspaceProject,workspaceSkill,addWorkspaceSkill,updateWorkspaceSkill,readWorkspace,workspaceProjectBackup,readWorkspaceProjectBackup,restoreWorkspaceProject,recoverLegacyWorkspace} from './workspace.mjs';
 import {projectDirectoryMarkup,skillDirectoryMarkup} from './workspace-view.mjs';
 import {captureWorkflowInputs,reviewChangedInputs} from './workflow-order.mjs';
@@ -10,12 +11,9 @@ import {CONTRACT_FIELDS,resourceComplete,resourceMarkdown,applyResourceAnalysis,
 import {independentReviewState,createIndependentReviewPacket,recordIndependentReview,sourceTriage} from './independent-review.mjs';
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-let workspace=emptyWorkspace(),project=null,activeProjectId='',storageAvailable=true,storageBlocked=false,recoveryText='',startupNotice='';
-try{
- const stored=localStorage.getItem(WORKSPACE_STORE);
- if(stored){try{workspace=readWorkspace(stored);}catch{storageBlocked=true;recoveryText=stored;startupNotice='Your saved projects could not be reopened. Download a recovery copy before starting a new workspace.';}}
- else {const legacy=localStorage.getItem(LEGACY_SKILL_STORE);if(legacy){try{workspace=recoverLegacyWorkspace(legacy);}catch{storageBlocked=true;recoveryText=legacy;startupNotice='Your earlier draft could not be reopened. Download a recovery copy before starting a new workspace.';}}}
-}catch{storageAvailable=false;}
+let workspace=emptyWorkspace(),project=null,activeProjectId='',storageReady=false,recoveryText='';
+let storageStatus='loading',storageMessage='',browserMigration=null,browserDigest='';
+const persistence=createWorkspacePersistence({preview:location.protocol==='file:',onStatus:({state,message})=>{storageStatus=state;storageMessage=message;renderStorageNotice();}});
 let page='projects',view='guided',selected='',tab='definition',referenceId='',referenceTab='files',packageFile='SKILL.md';
 let history=[],future=[],dialogState=null,pendingImport=null,pendingImportProjectId='',importDestination='',importRequestToken=0,restoreRequest={mode:'project',projectId:''},toastTimer=null,previewTab='input',previewValues={};
 let resourceId='',resourceFilter='generate';
@@ -24,8 +22,38 @@ const step=()=>project?.steps.find(s=>s.id===selected)||project?.steps[0];
 const currentContainer=()=>workspaceProject(workspace,activeProjectId);
 function save(){
  if(project&&currentContainer()){const previous=workspaceSkill(workspace,activeProjectId,project.id);if(previous&&JSON.stringify(previous)!==JSON.stringify(project))updateWorkspaceSkill(workspace,activeProjectId,project);}
- if(!storageBlocked){try{localStorage.setItem(WORKSPACE_STORE,JSON.stringify(workspace));storageAvailable=true;startupNotice='';}catch{storageAvailable=false;startupNotice='Changes are available in this tab. Download a backup to keep them.';}}
- $('#save-state').textContent=storageBlocked?'Recovery needed':storageAvailable?'Saved on this device':'Download a backup to keep changes';
+ if(storageReady)persistence.schedule(workspace);
+ renderStorageNotice();
+}
+function renderStorageNotice(){
+ const labels={loading:'Opening local database…',saved:'Saved to local database',saving:'Saving to local database…',preview:'Preview · changes stay in this tab',unavailable:'Database unavailable',error:'Changes not saved',conflict:'Save conflict'};
+ $('#save-state').textContent=labels[storageStatus]||'Local database';$('#save-state').dataset.state=storageStatus;
+ const messages=[];
+ if(storageStatus==='loading')messages.push('<p>Opening projects from the local database…</p>');
+ if(storageStatus==='preview')messages.push('<p>Preview mode: changes stay in this tab. Start the local server for durable project storage. Download a backup before closing this preview.</p>');
+ if(['unavailable','error','conflict'].includes(storageStatus))messages.push('<p>'+esc(storageMessage||'Projects could not be saved to the database.')+'</p><div class="flex">'+(storageStatus==='conflict'?button('Reload database','reload-database'):button('Retry database','retry-storage'))+(storageReady?button('Back up unsaved projects','save-project'):'')+'</div>');
+ if(browserMigration&&!workspace.browserImports?.includes(browserDigest))messages.push('<p>Earlier project data exists in this browser. Review it before copying it to the local database.</p><div class="flex">'+(storageStatus!=='preview'&&storageReady?button('Review browser data','browser-migration'):'')+button('Download browser backup','download-browser-data')+'</div>');
+ else if(recoveryText)messages.push('<p>Earlier browser data could not be read. Download its original contents for recovery.</p>'+button('Download browser data','download-recovery'));
+ $('#workspace-notice').hidden=!messages.length;$('#workspace-notice').innerHTML=messages.join('');
+}
+async function findBrowserData(){
+ try{
+  const current=localStorage.getItem(WORKSPACE_STORE),legacy=current?null:localStorage.getItem(LEGACY_SKILL_STORE),raw=current||legacy;
+  if(!raw)return;
+  recoveryText=raw;
+  browserMigration=current?readWorkspace(current):recoverLegacyWorkspace(legacy);
+  if(!browserMigration.projects.length){browserMigration=null;recoveryText='';return;}
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+  browserDigest=Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');recoveryText='';
+ }catch{browserMigration=null;/* Browser data is only a recovery source; it never blocks the database. */}
+ renderStorageNotice();
+}
+async function initializeStorage(){
+ storageReady=false;render();document.querySelectorAll('button').forEach(button=>button.disabled=true);$('#content').innerHTML='<div class="notice-box">Opening the local project database…</div>';
+ try{const loaded=await persistence.load();workspace=loaded?readWorkspace(JSON.stringify(loaded)):emptyWorkspace();storageReady=true;project=null;activeProjectId='';page='projects';resetSkillView();}
+ catch{/* A failed load must never save an empty workspace over existing data. */}
+ document.querySelectorAll('button').forEach(button=>button.disabled=false);render();
+ await findBrowserData();
 }
 function notify(text,error=false){clearTimeout(toastTimer);$('#toast').textContent=text;$('#toast').classList.toggle('error',error);$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,4500);}
 function mutate(fn,message,{definitionChange=true,renderPage=true,coalesceKey='',orderChange=false}={}){const record=!coalesceKey||coalesceKey!==inlineHistoryKey;if(record){history.push(copy(project));if(history.length>40)history.shift();future=[];}const before=orderChange?captureWorkflowInputs(project):null;fn();if(before)reviewChangedInputs(project,before);if(definitionChange&&record)project.revision++;inlineHistoryKey=coalesceKey;project.updatedAt=new Date().toISOString();save();if(renderPage)render();else refreshWorkflowChrome();if(message)notify(message);}
@@ -92,12 +120,12 @@ function render(){
  $('#project-actions').innerHTML=page==='projects'?button('＋ Create project','create-workspace-project','','primary')+button('Restore project','restore-project'):page==='skills'?button('＋ Add skill','add-skill','','primary')+button('Edit project','edit-workspace-project',`data-id="${esc(container.id)}"`):button('Edit brief','project')+'<button class="button primary" data-page="package">Review & export ↗</button>';
  $('#breadcrumbs').innerHTML=page==='projects'?'':button('Projects','projects','','quiet')+'<span aria-hidden="true">›</span>'+(editor?button(esc(container.name),'project-skills','','quiet')+'<span aria-hidden="true">›</span><span>'+esc(project.title)+'</span>':'<span>'+esc(container.name)+'</span>');
  $('#breadcrumbs').hidden=page==='projects';
- $('#workspace-notice').hidden=!startupNotice;$('#workspace-notice').innerHTML=startupNotice?'<p>'+esc(startupNotice)+'</p>'+(storageBlocked?'<div class="flex">'+button('Download recovery copy','download-recovery')+button('Start a new workspace','reset-workspace','','quiet')+'</div>':''):'';
+ renderStorageNotice();
  document.querySelectorAll('.nav-item').forEach(b=>{const active=b.dataset.page===page;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  $('#nav-issues').textContent=editor?(validate(project).errors.length||''):'';
  document.querySelector('[data-action="undo"]').disabled=!editor||!history.length;document.querySelector('[data-action="redo"]').disabled=!editor||!future.length;
  document.querySelector('.top-actions [data-action="save-project"]').textContent=container?'Back up project':'Back up projects';
- if(page==='projects'){ $('#content').innerHTML=projectDirectoryMarkup(workspace);return; }
+ if(page==='projects'){ $('#content').innerHTML=projectDirectoryMarkup(workspace,storageStatus==='preview'?'in this preview':'stored in the local database');if(!storageReady)document.querySelectorAll('#content button,#project-actions button,.sidebar button').forEach(button=>button.disabled=true);return; }
  if(page==='skills'){ $('#content').innerHTML=skillDirectoryMarkup(container);return; }
  if(project.steps.length&&!project.steps.some(s=>s.id===selected))selected=project.steps[0].id;
  ({workflow:renderWorkflow,references:renderReferences,screens:renderScreens,scenarios:renderScenarios,package:renderPackage}[page])();
@@ -107,7 +135,8 @@ function openDialog(mode,{id='',index=-1}={}){dialogState={mode,id,index};const 
  if(mode==='create-workspace-project'||mode==='edit-workspace-project'){const container=mode==='edit-workspace-project'?workspaceProject(workspace,id):{name:'',description:''};if(!container){dialogState=null;return;}title=mode==='create-workspace-project'?'Create a project':'Edit project';eyebrow='PROJECT ORGANIZATION';body=field('Project name','projectName',container.name,{required:true,placeholder:'What are these skills for?'})+field('Description (optional)','projectDescription',container.description,{type:'textarea',rows:3});submit=mode==='create-workspace-project'?'Create project':'Save project';help='A project groups related skills. Add or import skills after creating it.';}
  else if(mode==='add-skill'){if(!currentContainer()){dialogState=null;return;}title='How would you like to add a skill?';eyebrow=currentContainer().name;body='<div class="skill-choice-grid"><button type="button" class="skill-choice" data-action="new"><span class="directory-icon">＋</span><strong>Create a fresh skill</strong><span>Start with a name, then define its process step by step.</span></button><button type="button" class="skill-choice" data-action="import"><span class="directory-icon">↥</span><strong>Import an existing skill</strong><span>Bring in SKILL.md or a ZIP, then review and refine the workflow.</span></button></div>';submit='';help='The new skill will be added to this project. Your other skills stay in place.';}
  else if(mode==='new'){if(!currentContainer()){dialogState=null;return;}title='Create a fresh skill';eyebrow='ADD A SKILL / '+currentContainer().name;body=field('Skill title','title','',{required:true})+field('Skill name','slug','',{required:true,help:'Lowercase words separated by hyphens. This becomes the export folder name.'})+field('What should this skill help you do? (optional)','description','',{type:'textarea',rows:3});submit='Create skill';help='Define inputs, outputs, instructions, and the workflow in the skill editor.';}
- else if(mode==='reset-workspace'){title='Start a new workspace?';eyebrow='SAVED DATA RECOVERY';body='<p>The unreadable saved workspace will be replaced when you create new projects. Download the recovery copy first if you need to keep it.</p>'+button('Download recovery copy','download-recovery')+'<label class="check-row"><input type="checkbox" name="confirmReset" required>I have kept a recovery copy or do not need the earlier data.</label>';submit='Start new workspace';help='';}
+ else if(mode==='browser-migration'){if(!browserMigration){dialogState=null;return;}title='Copy earlier browser projects?';eyebrow='BROWSER DATA → LOCAL DATABASE';body='<p>These projects will be copied into the database. Existing projects are preserved, and the browser originals remain available as a recovery copy.</p><div class="import-list">'+browserMigration.projects.map(container=>'<div class="import-row"><div><strong>'+esc(container.name)+'</strong><p>'+container.skills.length+' skills</p><p class="small">'+container.skills.map(skill=>esc(skill.title)).join(' · ')+'</p></div></div>').join('')+'</div>';submit='Copy projects to database';help='The old version may have automatically saved its demo. Copy only if you want to retain these projects.';}
+ else if(mode==='reload-database'){title='Reload the saved projects?';eyebrow='DATABASE CONFLICT';body='<p>The database contains another browser’s changes. Reloading will replace this tab’s working copy.</p>'+button('Back up unsaved projects','save-project')+'<label class="check-row"><input type="checkbox" name="confirmReload" required>I have backed up my unsaved changes or do not need them.</label>';submit='Reload database';help='The database will not be overwritten.';}
  else if(mode==='project'){const p=project;title='The skill brief';body=field('Skill title','title',p.title,{required:true})+field('Skill name','slug',p.slug,{required:true,help:'Lowercase words separated by hyphens. This becomes the skill folder name.'})+field('What does it do, and when should it be used?','description',p.description,{type:'textarea',rows:3,required:true})+field('Purpose','purpose',p.purpose,{type:'textarea',rows:2})+'<div class="field-grid">'+field('Overall input','input',p.input,{required:true})+field('Final output / completion condition','outcome',p.outcome,{type:'textarea',rows:2,required:true})+'</div>'+field('Instructions used across the process','instructions',p.instructions,{type:'textarea',rows:3})+`<details class="facet"><summary>Additional skill metadata</summary><div class="facet-body">${field('Optional frontmatter fields','extraFrontmatter',p.extraFrontmatter,{type:'textarea',rows:4,help:'Keep license and compatibility information intact. Name and description are managed above.'})}</div></details>`;}
  else if(mode==='edit-step'||mode==='add-step'){const current=mode==='add-step'?newStep(''):s;title=mode==='add-step'?'Add a meaningful step':'Define this step';eyebrow='ONE INPUT → ONE OUTPUT';body=field('What should this step accomplish?','title',current.title,{required:true})+selectField('Step type','kind',current.kind,['Input','Select','Retrieve','Transform','Decision','Output','Process'])+`<div class="contract-box"><span class="eyebrow">INPUT ${mode==='add-step'?'FROM THE SELECTED STEP':''}</span><strong>${esc(mode==='add-step'?(s?.output||project.input):inputFor(project,project.steps.indexOf(s)))}</strong></div>`+field('What should happen?','job',current.job,{type:'textarea',rows:5,required:true})+field('What should it produce?','output',current.output,{required:true})+'<div class="field-grid">'+field('Example input','exampleInput',current.exampleInput,{type:'textarea',rows:3})+field('Expected output','exampleOutput',current.exampleOutput,{type:'textarea',rows:3})+'</div>'+`<div class="stack"><h4>Linked references</h4>${project.references.map(r=>`<label class="check-row"><input type="checkbox" name="references" value="${esc(r.path)}" ${current.references.includes(r.path)?'checked':''}>${esc(r.path)}</label>`).join('')||'<p class="small">Add Markdown resources in References & rules.</p>'}</div>`+`<div class="stack"><h4>Supporting resources</h4>${project.resources.map(r=>`<label class="check-row"><input type="checkbox" name="resourceIds" value="${esc(r.id)}" ${current.resourceIds.includes(r.id)?'checked':''}>${esc(r.sourcePath)} · ${r.policy==='generate'?'English specification':'Retained asset or documentation'}</label>`).join('')||'<p class="small">Import or attach supporting sources in Resources.</p>'}</div>`;if(current.source&&!current.reviewed)body+='<label class="check-row"><input type="checkbox" name="reviewed">I have reviewed the source mapping and confirmed this step.</label>';submit=mode==='add-step'?'Add step':'Save step';}
  else if(mode==='promote-override'||mode==='split-override'){const facet=s.facets.find(f=>f.id===id),definition=project.definitions.find(d=>d.id===facet?.definitionId);if(!definition||!facet.override){dialogState=null;return;}title=mode==='promote-override'?'Update the shared rule?':'Create a separate rule';eyebrow='RESOLVE A LOCAL OVERRIDE';const uses=project.steps.flatMap(step=>step.facets).filter(f=>f.definitionId===definition.id).length;body=`<div class="contract-box"><strong>${esc(definition.name)}</strong><span>Shared: ${esc(definition.value)}</span><span>Local: ${esc(facet.override)}</span></div>`+(mode==='promote-override'?`<p>${uses} linked facets and ${project.screens.input.filter(field=>field.definitionId===definition.id).length} input field defaults follow this shared definition. Other local overrides still require review.</p>`:field('New rule name','ruleName',definition.name+' — separate',{required:true}));submit=mode==='promote-override'?'Update shared rule':'Create separate rule';help='Review the scope of the change before saving.';}
@@ -146,7 +175,17 @@ $('#dialog-form').addEventListener('submit',async event=>{event.preventDefault()
  try{
   const mode=state.mode;
   if(mode==='create-workspace-project'||mode==='edit-workspace-project'){const name=get('projectName');if(!name||name.length>100)throw new Error('Use a project name between 1 and 100 characters.');save();if(mode==='create-workspace-project'){const container=addWorkspaceProject(workspace,createWorkspaceProject(name,get('projectDescription')));activeProjectId=container.id;project=null;page='skills';resetSkillView();}else{const container=workspaceProject(workspace,state.id);if(!container)throw new Error('That project is no longer available.');container.name=name;container.description=get('projectDescription');container.updatedAt=new Date().toISOString();}save();render();closeDialog();notify(mode==='create-workspace-project'?'Project created. Add your first skill.':'Project details saved.');return;}
-  if(mode==='reset-workspace'){if(!data.has('confirmReset'))throw new Error('Confirm that you kept a recovery copy or do not need the earlier data.');workspace=emptyWorkspace();project=null;activeProjectId='';storageBlocked=false;recoveryText='';startupNotice='';page='projects';resetSkillView();save();render();closeDialog();return;}
+  if(mode==='reload-database'){if(!data.has('confirmReload'))throw new Error('Keep a backup or confirm you do not need the unsaved changes.');closeDialog();await initializeStorage();return;}
+  if(mode==='browser-migration'){
+   if(!storageReady||!browserMigration||storageStatus==='preview')throw new Error('Open the local server before copying browser data.');
+   if(workspace.browserImports?.includes(browserDigest)){closeDialog();return;}
+   if(!(await persistence.flush()))throw new Error('Save or resolve the database conflict before copying browser data.');
+   if(workspace.projects.length+browserMigration.projects.length>200)throw new Error('The database supports up to 200 projects.');
+   for(const container of browserMigration.projects)restoreWorkspaceProject(workspace,container);
+   workspace.browserImports=[...new Set([...(workspace.browserImports||[]),browserDigest])];save();
+   if(!(await persistence.flush()))throw new Error('The copy is in this tab, but the database save failed. Back it up before reloading.');
+   closeDialog();showProjects();notify('Earlier browser projects copied to the local database.');return;
+  }
   if(mode==='new'){if(!get('title')||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(get('slug'))||get('slug').length>64)throw new Error('Add a title and a lowercase skill name separated by hyphens (up to 64 characters).');const skill=blankProject(get('title'));skill.slug=get('slug');skill.description=get('description');replaceProject(skill,'New skill added. Define its brief and first meaningful step.');closeDialog();return;}
 if(mode==='import'){if(!get('markdown'))throw new Error('Choose a file or paste a skill.');await prepareImport({'SKILL.md':get('markdown')});return;}
   if(mode==='import-review'){replaceProject(pendingImport,'Imported skill added. Review its step boundaries and import notes.',pendingImportProjectId);pendingImport=null;closeDialog();return;}
@@ -169,7 +208,7 @@ if(mode==='import'){if(!get('markdown'))throw new Error('Choose a file or paste 
  }catch(error){dialogError(error.message);}
 });
 
-document.addEventListener('click',event=>{const b=event.target.closest('button');if(!b||b.disabled)return;inlineHistoryKey='';
+document.addEventListener('click',event=>{const b=event.target.closest('button');if(!b||b.disabled)return;inlineHistoryKey='';if(!storageReady&&!['retry-storage','download-recovery'].includes(b.dataset.action))return;
  if(b.dataset.page){if(b.dataset.page==='projects'){showProjects();return;}if(b.dataset.page==='skills'){if(activeProjectId)openWorkspaceProject(activeProjectId);return;}if(!project)return;page=b.dataset.page;render();return;}
  if(b.dataset.view){view=b.dataset.view;render();return;}
  if(b.dataset.step){selected=b.dataset.step;render();if(window.innerWidth<=800)$('.inspector')?.scrollIntoView({block:'start',behavior:'smooth'});return;}
@@ -182,6 +221,9 @@ document.addEventListener('click',event=>{const b=event.target.closest('button')
  if(b.dataset.packageFile){packageFile=b.dataset.packageFile;render();return;}
  if(b.dataset.previewTab){capturePreview();previewTab=b.dataset.previewTab;openDialog('preview');return;}
  const action=b.dataset.action;if(!action)return;
+ if(action==='retry-storage'){if(!storageReady)initializeStorage();else persistence.retry();return;}
+ if(action==='reload-database'){if(persistence.hasChanges())openDialog('reload-database');else initializeStorage();return;}
+ if(action==='download-browser-data'){if(browserMigration)download(new Blob([JSON.stringify(browserMigration,null,2)],{type:'application/json'}),'earlier-browser-projects.json');return;}
  if(action==='projects'){showProjects();return;}
  if(action==='project-skills'){if(activeProjectId)openWorkspaceProject(activeProjectId);return;}
  if(action==='open-workspace-project'){openWorkspaceProject(b.dataset.id);return;}
@@ -266,7 +308,7 @@ document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&e
 const reviewReportInput=document.createElement('input');reviewReportInput.id='review-report-file';reviewReportInput.type='file';reviewReportInput.accept='.json';reviewReportInput.hidden=true;document.body.append(reviewReportInput);reviewReportInput.addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>2*1024*1024)throw new Error('Review reports must be at most 2 MB.');const report=JSON.parse(await file.text()),target=copy(project),base=project;await recordIndependentReview(target,report);if(base!==project||target.independentReview.snapshot!==reviewSnapshotForImport(project,target))throw new Error('The skill changed while the report was being checked. Try again.');mutate(()=>{project.independentReview=target.independentReview;page='package';},'Independent review report recorded.',{definitionChange:false});}catch(error){notify(error.message,true);}});
 function reviewSnapshotForImport(current,target){return JSON.stringify(createReviewSnapshotData(current))===JSON.stringify(createReviewSnapshotData(target))?target.independentReview.snapshot:'';}
 function createReviewSnapshotData(p){const value=copy(p);delete value.independentReview;return value;}
-
-save();render();
-
+await initializeStorage();
+window.addEventListener('beforeunload',event=>{if(persistence.hasChanges()){event.preventDefault();event.returnValue='';}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)persistence.flush();});
 document.querySelector('.brand').addEventListener('click',event=>{event.preventDefault();showProjects();});

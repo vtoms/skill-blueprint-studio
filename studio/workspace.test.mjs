@@ -30,3 +30,6 @@ test('corrupt backups and duplicate identities are rejected rather than partly l
   container.skills.push(blankProject('One'));container.skills.push({...container.skills[0]});assert.throws(()=>readWorkspace(JSON.stringify(workspace)),/identities/);
   container.skills.pop();workspace.projects.push({...container});assert.throws(()=>readWorkspace(JSON.stringify(workspace)),/identities/);
 });
+test('browser migration markers survive backups and malformed markers are rejected',()=>{
+  const workspace=emptyWorkspace();workspace.browserImports=['a'.repeat(64)];assert.deepEqual(readWorkspace(JSON.stringify(workspace)),workspace);workspace.browserImports=['invalid'];assert.throws(()=>readWorkspace(JSON.stringify(workspace)),/migration record/);
+});

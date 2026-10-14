@@ -1,0 +1,14 @@
+import {DatabaseSync} from 'node:sqlite';
+import {mkdir,rename,rm} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {openWorkspaceDatabase} from './workspace-database.mjs';
+const folder=fileURLToPath(new URL('./seed/',import.meta.url));
+await mkdir(folder,{recursive:true});
+const temporary=fileURLToPath(new URL('./seed/workspace.build.sqlite',import.meta.url));
+await rm(temporary,{force:true});
+const store=openWorkspaceDatabase(temporary);store.close();
+const database=new DatabaseSync(temporary);
+database.prepare('UPDATE workspace_state SET updated_at=? WHERE id=1').run('1970-01-01T00:00:00.000Z');
+database.exec('PRAGMA journal_mode=DELETE; VACUUM;');database.close();
+await rename(temporary,fileURLToPath(new URL('./seed/workspace.sqlite',import.meta.url)));
+console.log('Built empty SQLite template: studio/seed/workspace.sqlite');
