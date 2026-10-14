@@ -2,6 +2,16 @@
 
 A local visual authoring prototype for building reviewable Claude skills. Define a process as meaningful input-to-output steps, manage the functions and rules inside each step, and export a skill ZIP with Markdown instructions and supporting assets.
 
+## Start with projects
+
+The app always opens on **Projects**, including after a reload. Create a project or open an existing one to see its skills. A project starts empty and can contain multiple independent skills.
+
+Choose **Add skill**, then **Create a fresh skill** or **Import an existing skill**. Fresh skills start with a name; define their brief and workflow in the editor. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
+
+The editor opens in **Step by step**. Switch to **List** or the optional **Canvas** view to work with the same skill, steps, facets, references, and rules. The canvas currently represents a sequential process. Free graph connections and executable branching are not implemented.
+
+Use the project breadcrumb or **Project skills** to return to the skill list, and **Projects** to return to the directory. The demo is an explicit **Explore the demo** option.
+
 ## Run locally
 
 Requirements: Node.js 24 or later, Python 3.12 or later, and a modern browser. No package installation or API key is needed.
@@ -17,7 +27,8 @@ You can also open `studio/dist/skill-blueprint-studio.html` directly for authori
 
 ## What you can do
 
-- Work in flow, list, or guided views; add and reorder steps with explicit inputs and outputs.
+- Organize multiple skills inside projects, with a project directory and skill list.
+- Work in Canvas, List, or Step-by-step views; add and reorder steps with explicit inputs and outputs.
 - Define inner functions, decisions, tool contracts, exceptions, shared rules, and references.
 - Specify input fields, output columns, presentation rules, and illustrative screen data.
 - Import Markdown or a skill ZIP, retain complete original bytes, and review heading-based proposed steps.
@@ -27,7 +38,15 @@ You can also open `studio/dist/skill-blueprint-studio.html` directly for authori
 - Resolve structural conflicts and export `SKILL.md`, Markdown references, and retained assets.
 - Save and reopen an editable project backup.
 
-The included generic demo intentionally contains one conflicting shared-rule override. Open **Review & export** to inspect it, then remove the override from **Read source data** to use the shared value.
+**Explore the demo** opens an optional example project. Its skill intentionally contains one conflicting shared-rule override. Open **Review & export** to inspect it, then remove the override from **Read source data** to use the shared value.
+
+## Saving and backups
+
+Projects and their skills autosave in this browser on this device. **Back up project** downloads every skill in the selected project as a `.blueprint.json` file. **Back up projects** on the directory downloads the whole workspace. **Back up this skill** in Review & export keeps the individual `.agentic.json` format.
+
+**Restore project** accepts a project, workspace, or older single-skill backup and adds recovered projects without overwriting existing ones. **Restore a skill backup** adds an individual backup to the current project. Earlier locally saved drafts are migrated into a **Recovered drafts** project; the app still opens on Projects.
+
+Browser storage has capacity limits, especially with large imported assets. If autosave fails, the app keeps the current in-memory edits and asks you to download a backup. Unreadable saved data is preserved for recovery rather than silently overwritten.
 
 ## Independent review of imports
 
@@ -55,7 +74,7 @@ This is an authoring prototype, not a workflow execution service. It does not pr
 
 Imports propose steps from Markdown headings. Source analysis drafts behavior contracts; parsing coverage does not prove semantic equivalence. HTML layout, styling, interactions, dynamic library behavior, and embedded native or macro code can require manual specifications and review. Structural asset inventories do not infer domain meaning or recalculate workbooks.
 
-Projects are saved in browser storage; download backups to keep a portable copy. Archive input is limited to 120 entries, 2 MB per file, and 8 MB total. Project backups are limited to 32 MB.
+Projects are saved in browser storage; download backups to keep a portable copy. Archive input is limited to 120 entries, 2 MB per file, and 8 MB total. Individual skill backups are limited to 32 MB, project backups to 64 MB, and workspace backups to 128 MB.
 
 ## Code and license
 
