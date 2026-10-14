@@ -6,7 +6,9 @@ A local visual authoring prototype for building reviewable Claude skills. Define
 
 The app always opens on **Projects**, including after a reload. Create a project or open an existing one to see its skills. A project starts empty and can contain multiple independent skills.
 
-Choose **Add skill**, then **Create a fresh skill** or **Import an existing skill**. Fresh skills start with a name; define their brief and workflow in the editor. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
+Choose **Add skill**, then **Create a fresh skill** or **Import an existing skill**. A fresh skill starts with **Start with a prompt**: describe its goal, inputs, outputs, rules, tools and exceptions, generate a draft through your local Claude Code CLI, review it, and open the editor. **Start blank** provides manual authoring. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
+
+Prompt-generated drafts include the brief, workflow steps, inner facets, Markdown references, screen definitions and test scenarios. **Review prompt setup** exposes assumptions and open questions. Confirmed answers become shared definitions. Each generated step requires separate confirmation, and test scenarios start as **Not tested**. See the [prompt setup guide](docs/PROMPT_SETUP.md).
 
 The editor opens in **Step by step**. Switch to **List** or the optional **Canvas** view to work with the same skill, steps, facets, references, and rules. The canvas currently represents a sequential process. Free graph connections and executable branching are not implemented.
 
@@ -19,6 +21,8 @@ Use the project breadcrumb or **Project skills** to return to the skill list, an
 ## Run locally
 
 Requirements: Node.js 24.15 or later, Python 3.12 or later for source analysis, and a modern browser. No npm/pip package installation or API key is needed. The server uses Node's built-in SQLite module.
+
+Prompt generation additionally requires the native Claude Code CLI **2.1.299 or later**, signed in as the operating-system user running the server. Run `claude auth login` in that user's terminal. Drafting uses the CLI's configured account and model; account limits and provider billing apply. Set `STUDIO_CLAUDE_PATH` when the native executable is not detected and `STUDIO_CLAUDE_MODEL` to select a specific supported model or alias. Manual authoring and import remain available without Claude Code.
 
 ```sh
 npm run build
@@ -34,6 +38,7 @@ Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitl
 ## What you can do
 
 - Organize multiple skills inside projects, with a project directory and skill list.
+- Start a new skill from a natural-language prompt using the local Claude Code CLI, review its proposed contracts, and continue editing.
 - Edit step contracts and inner facets directly in Canvas, List, or Step-by-step views; insert and reorder steps with explicit inputs and outputs.
 - Resolve a local rule override by using the shared value, updating the shared rule after reviewing its uses, or creating a separate rule.
 - Define inner functions, decisions, tool contracts, exceptions, shared rules, and references.
@@ -89,7 +94,7 @@ Projects are stored in a local database. This release is a local single-workspac
 
 ## Code and license
 
-The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database adapter, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. The browser, Node.js, and Python provide the other platform APIs.
+The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database and drafting adapters, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation invokes a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
 
 The application is licensed under [MIT](LICENSE). See [the provenance and runtime inventory](studio/THIRD_PARTY_APPLICATION.md). Runtime binaries are not distributed with this repository.
 

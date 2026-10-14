@@ -13,7 +13,7 @@ test('local server serves the app, persists projects, rejects stale writes, and 
  const dataDirectory=await mkdtemp(join(tmpdir(),'blueprint-server-'));t.after(()=>rm(dataDirectory,{recursive:true,force:true}));
  const probe=createServer();probe.listen(0,'127.0.0.1');await once(probe,'listening');
  const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
- const server=spawn(process.execPath,[fileURLToPath(new URL('./serve.mjs',import.meta.url))],{env:{...process.env,STUDIO_PORT:String(port),STUDIO_DATA_DIR:dataDirectory},windowsHide:true,stdio:['ignore','pipe','pipe']});
+ const server=spawn(process.execPath,[fileURLToPath(new URL('./serve.mjs',import.meta.url))],{env:{...process.env,STUDIO_PORT:String(port),STUDIO_DATA_DIR:dataDirectory,STUDIO_CLAUDE_PATH:'missing-test-drafting-cli'},windowsHide:true,stdio:['ignore','pipe','pipe']});
  let errors='';server.stderr.on('data',data=>errors+=data);
  try{
   await new Promise((resolve,reject)=>{
@@ -29,6 +29,9 @@ test('local server serves the app, persists projects, rejects stale writes, and 
   assert.equal((await put()).status,200);assert.equal((await put()).status,409);assert.equal((await (await fetch(base+'/api/workspace')).json()).workspace.projects[0].name,'Saved collection');
   assert.equal((await fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:'{}'})).status,403);
   assert.equal((await fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'text/plain'},body:'{}'})).status,400);
+  const drafting=await (await fetch(base+'/api/skill-draft')).json();assert.equal(drafting.ready,false);assert.match(drafting.message,/not installed/);
+  assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:'short'})})).status,400);
+  assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:JSON.stringify({prompt:'Create a record review skill.'})})).status,403);
   const entries=[{path:'scripts/sample.py',data:Buffer.from('def add(a,b):\n return a+b\n').toString('base64')}];
   const response=await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(entries)});
   assert.equal(response.status,200);const analysis=await response.json();

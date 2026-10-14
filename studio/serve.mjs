@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve,extname,sep} from 'node:path';
 import {execFile} from 'node:child_process';
 import {openWorkspaceDatabase} from './workspace-database.mjs';
+import {createClaudeDrafting} from './claude-drafting.mjs';
 
 const root=fileURLToPath(new URL('.',import.meta.url));
 const port=Number(process.env.STUDIO_PORT||8766);
@@ -11,15 +12,16 @@ if(!Number.isInteger(port)||port<1||port>65535)throw new Error('STUDIO_PORT must
 const python=process.env.STUDIO_PYTHON||(process.platform==='win32'?'python':'python3');
 const dataDirectory=resolve(process.env.STUDIO_DATA_DIR||resolve(root,'../.local-data'));
 const workspaceDatabase=openWorkspaceDatabase(resolve(dataDirectory,'workspace.sqlite'),{template:resolve(root,'seed/workspace.sqlite')});
+const drafting=createClaudeDrafting({dataDirectory});
 
 function localRequest(req){
  const hosts=['127.0.0.1:'+port,'localhost:'+port];
  if(!hosts.includes(req.headers.host)||req.headers.origin&&!hosts.map(host=>'http://'+host).includes(req.headers.origin)||req.headers['sec-fetch-site']==='cross-site')throw new Error('Use the local application to access its database.');
 }
 function jsonResponse(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));}
-async function readDatabaseRequest(req){
+async function readDatabaseRequest(req,limit=140*1024*1024){
  if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']||''))throw new Error('Send a JSON database request.');
- const chunks=[];let length=0;for await(const chunk of req){length+=chunk.length;if(length>140*1024*1024){const error=new Error('Database requests must be under 140 MB.');error.status=413;throw error;}chunks.push(chunk);}
+ const chunks=[];let length=0;for await(const chunk of req){length+=chunk.length;if(length>limit){const error=new Error('The request exceeds its size limit.');error.status=413;throw error;}chunks.push(chunk);}
  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
@@ -36,6 +38,16 @@ async function analyzeRequest(req){
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
+  if(pathname==='/api/skill-draft'){
+   try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
+   if(req.method==='GET'){jsonResponse(res,200,await drafting.status(true));return;}
+   if(req.method==='POST'){
+    const controller=new AbortController();res.once('close',()=>{if(!res.writableEnded)controller.abort();});
+    try{const input=await readDatabaseRequest(req,100000),skill=await drafting.generate(input,{signal:controller.signal});if(!res.destroyed)jsonResponse(res,200,{skill});}
+    catch(error){if(!res.destroyed)jsonResponse(res,error.status||400,{error:error.message});}return;
+   }
+   jsonResponse(res,405,{error:'Use GET or POST for skill drafting.'});return;
+  }
   if(pathname==='/api/workspace'){
    try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
    if(req.method==='GET'){jsonResponse(res,200,{...workspaceDatabase.read(),storage:{engine:'SQLite',database:workspaceDatabase.path}});return;}

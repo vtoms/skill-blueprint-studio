@@ -15,7 +15,7 @@ export function workflowStepStatus(skill,step,checks){
   if(!step.title.trim())chips.push('Missing name');
   if(!step.job.trim())chips.push('Missing instructions');
   if(!step.output.trim())chips.push('Missing output');
-  if(!step.reviewed)chips.push('Confirm import');
+  if(!step.reviewed)chips.push(skill.generation?'Confirm draft':'Confirm import');
   if(step.inputReview)chips.push('Input changed');
   if(step.facets.some(f=>{const definition=skill.definitions.find(d=>d.id===f.definitionId);return definition&&f.override&&f.override!==definition.value;}))chips.push('Conflict');
   const errors=checks.errors.filter(issue=>issue.stepId===step.id);
@@ -79,7 +79,7 @@ function wfSource(skill,step){
 export function workflowStepNotices(skill,step,checks){
   const previous=step.inputReview?.previous,index=skill.steps.indexOf(step);
   const change=previous?`<div class="input-change notice-box warning"><strong>Preceding step changed</strong><p>Previously: ${wfEsc(previous.title||'Untitled step')} → ${wfEsc(previous.output||'Output was not defined')}</p><p>Now: ${wfEsc(index?skill.steps[index-1].title:'Overall input')} → ${wfEsc(inputFor(skill,index)||'Input is not defined')}</p><p>Check that this step’s instructions still fit its new input.</p>${wfButton('Confirm the new input fits','confirm-input')}</div>`:'';
-  return change+(!step.reviewed?`<div class="source-callout"><span>Imported proposal. Review its source, input, instructions and output.</span>${wfButton('Confirm this proposed step','approve')}</div>`:'')+checks.errors.filter(issue=>issue.stepId===step.id&&issue.field!=='input-change').map(issue=>`<p class="editor-issue">${wfEsc(issue.message)}</p>`).join('');
+  return change+(!step.reviewed?`<div class="source-callout"><span>${skill.generation?'Generated proposal. Review its input, instructions and output.':'Imported proposal. Review its source, input, instructions and output.'}</span>${wfButton('Confirm this proposed step','approve')}</div>`:'')+checks.errors.filter(issue=>issue.stepId===step.id&&issue.field!=='input-change').map(issue=>`<p class="editor-issue">${wfEsc(issue.message)}</p>`).join('');
 }
 
 export function workflowInspectorMarkup(skill,state){

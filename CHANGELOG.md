@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-10-15
+
+- Add prompt-first fresh skill setup through a separately installed, signed-in Claude Code CLI.
+- Review the generated brief, step contracts, facets, screens, references, assumptions, questions and expected test results before adding the draft.
+- Preserve the original authoring prompt and model provenance in project backups and the local database.
+- Require setup review and per-step confirmation before export; record confirmed setup answers as shared definitions.
+- Keep all generated scenarios untested, with actual testing and observations remaining separate.
+- Support refinement, cancellation, failure recovery, bounded structured output and manual blank authoring.
+- Document the external Claude Code dependency, provider usage and applicable terms.
+
 ## 0.4.0 — 2026-10-15
 
 - Move authoritative workspace persistence from browser storage to a local SQLite database.

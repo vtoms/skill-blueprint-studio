@@ -1,0 +1,45 @@
+# Start a fresh skill with a prompt
+
+## Setup
+
+Prompt drafting uses a separately installed native Claude Code CLI version 2.1.299 or later. Sign in with `claude auth login` as the same operating-system user running the Studio server. The application uses that CLI's configured account and its effective default model, unless `STUDIO_CLAUDE_MODEL` selects a model or alias. Provider usage limits and account billing apply.
+
+On Windows, the application checks the usual native executable location under the current user profile, then `claude.exe` on PATH. On other systems it uses `claude` on PATH. Set `STUDIO_CLAUDE_PATH` to a native executable path when necessary. No shell is used to construct a command from the user prompt.
+
+There is no npm package dependency for this integration and no API key stored in the application. Claude Code's source and executable are not included in the repository. Its use is governed by [Anthropic's terms](https://github.com/anthropics/claude-code/blob/main/LICENSE.md), independently of this application's MIT license.
+
+## Authoring journey
+
+1. Open a project and choose **Add skill → Create a fresh skill**.
+2. **Start with a prompt** is selected. Describe the goal, required inputs, expected output, important rules, tool needs, references, exceptions and useful test cases. An optional title overrides the proposed title.
+3. Choose **Generate draft**. The local server asks Claude for a structured blueprint. Generation can take a few minutes. Cancel stops the request; it does not create a skill.
+4. Review the brief, step input/output contracts, inner-facet counts, assumptions, open questions and proposed scenarios. Nothing is added until **Add draft & open editor**. **Refine prompt & regenerate** retains the request so you can improve it first.
+5. In the editor, use **Review prompt setup** to answer open questions and confirm that assumptions have been reviewed and needed corrections applied. Confirmed answers are included as shared definitions in the exported Markdown.
+6. Review and confirm each proposed step separately. Edit its contract, facets, examples, references and resources using Step by step, List or Canvas. All views edit the same saved skill.
+7. Inspect the **Test scenarios** and adjust expected results. Export the ZIP when required checks pass, run it in Claude, and record actual observations against the appropriate revision.
+
+**Start blank** remains available for manual authoring, including when Claude Code is unavailable. Direct standalone-file use offers a memory-only preview and cannot call the drafting engine.
+
+## What a draft contains
+
+The model proposes the skill brief and global instructions, an ordered sequence of macro steps, inner instruction/rule/tool/decision/exception facets, shared definitions, Markdown instruction references, input fields, output columns, presentation rules, examples and test scenarios.
+
+The original prompt, model provenance, assumptions and questions are retained in authoring metadata. Backups preserve them. The raw prompt is not automatically pasted into the exported skill. Confirmed question answers become shared definitions so they can inform runtime instructions. If a linked answer definition is removed or changed, setup review becomes necessary again before export.
+
+No existing files are read by the drafting model. Attach actual reference and data files through the editor afterward, or describe their required structure in the prompt. A generated Markdown reference is a proposed instruction document, not proof that an external source was supplied. Unknown connection names and missing requirements should remain questions for review.
+
+## Review and testing limits
+
+Generation is an authoring operation, not a test run. Every proposed step starts unconfirmed. Scenarios have expected results but start as **Not tested**, with no observed outputs. The application does not execute the exported workflow, access its business tools, or authenticate MCP connections during drafting.
+
+Normal structural checks and the Markdown-only code policy apply. The drafting adapter rejects embedded Python/HTML, unsafe paths, malformed or oversized blueprints, undefined shared references and fabricated result/approval fields. A schema-valid response still needs functional review and runtime testing.
+
+The imported-skill adversarial-review policy remains in effect for imported sources and is not fulfilled by prompt generation. Human confirmation of a fresh draft is a separate operation.
+
+## Failure recovery
+
+An unavailable or signed-out CLI appears in the setup screen. Install or sign in through your terminal, then reopen the fresh-skill prompt screen. Update unsupported CLI versions before drafting.
+
+Only one draft runs at a time per server, with a five-minute timeout and bounded input/output. A failed generation retains the prompt and creates no skill. Retry after checking the account's availability, model configuration, and usage limits. Rejected output can be corrected by refining the prompt. Previously saved skills and the database are preserved.
+
+The application requests tool-free, restricted Claude execution with user customizations disabled and an isolated working directory. Organization-managed policy still applies. The prompt is sent to Claude when you generate; treat it as information shared with the configured provider.

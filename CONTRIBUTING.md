@@ -20,7 +20,7 @@ npm run test:analyzer
 
 On systems that use `python3`, invoke `python3 -m unittest discover -s studio -p analyze_sources_test.py` and set `STUDIO_PYTHON=python3` for the Node server tests. On PowerShell, set `$env:STUDIO_PYTHON` to the desired executable. Test databases are created in isolated temporary directories; tests do not use the user's working database.
 
-The Node suite covers workflow compilation, source preservation, independent review, workspace backups, input-change review, the database template, durability, stale-write rejection, persistence failures, and HTTP origin checks. Analyzer tests inspect source as data; they do not execute imported programs.
+The Node suite covers workflow compilation, source preservation, independent review, workspace backups, input-change review, the database template, durability, stale-write rejection, persistence failures, HTTP origin checks, blueprint validation, tool-free drafting arguments, and cancellation. Drafting tests use synthetic model responses and never consume a Claude account's usage. Analyzer tests inspect source as data; they do not execute imported programs.
 
 For schema changes, update the database version and provide a preserving migration. Regenerate the template with `npm run db:template` and verify that it contains only an empty workspace. Commit the template, its generator, tests, and storage documentation together.
 

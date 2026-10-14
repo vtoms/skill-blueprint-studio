@@ -8,6 +8,10 @@ The working database belongs outside the static web root. Database files are exc
 
 Imported skill files are untrusted input. Source analysis parses Python, HTML, and structural assets as data; it does not execute imported programs. Normal export retains structural checks and the separate adversarial-review requirement. Reviewer identities in this local application are declared rather than authenticated.
 
+Prompt drafting sends the submitted prompt and optional title to the separately installed Claude Code CLI. The application requests restricted mode, disabled built-in tools and MCP tools, disabled user customizations/hooks/skills, an isolated working directory, bounded output, a timeout, and no CLI session persistence. Managed organization policy still applies. The application does not request a permission bypass, provision credentials, or execute the generated skill. Claude Code authentication and provider-side handling remain subject to its configuration and service terms.
+
+Model output is validated against a bounded blueprint schema, with fresh application identities and no model-supplied approvals, test results, or independent-review passes. Executable Python/HTML instructions and unsafe resource paths are rejected. The original prompt and draft provenance are saved only after the user adds the draft; they can contain private information and are included in project backups.
+
 Do not expose this server externally without adding authentication, authorization, transport security, request controls, and an appropriate shared-data architecture. Separate machines use separate local databases unless data is explicitly transferred.
 
 Report a suspected issue without including credentials, private skills, or database contents. Public reproduction steps should use generic synthetic data.
