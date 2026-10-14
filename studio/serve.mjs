@@ -27,10 +27,10 @@ createServer(async(req,res)=>{
    catch(error){res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({error:error.message}));}
    return;
   }
-  const path=resolve(root,'.'+(pathname==='/'?'/dist/agentic-studio.html':pathname));
+  const path=resolve(root,'.'+(pathname==='/'?'/dist/skill-blueprint-studio.html':pathname));
   if(!path.startsWith(root.endsWith(sep)?root:root+sep)){res.writeHead(403);res.end();return;}
   const content=await readFile(path);
   res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.md':'text/markdown; charset=utf-8','.json':'application/json; charset=utf-8','.zip':'application/zip'}[extname(path)]||'application/octet-stream'),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
   res.end(content);
  }catch{res.writeHead(404);res.end('Not found');}
-}).listen(port,'127.0.0.1',()=>console.log('Agentic Studio: http://127.0.0.1:'+port));
+}).listen(port,'127.0.0.1',()=>console.log('Skill Blueprint Studio: http://127.0.0.1:'+port));

@@ -1,4 +1,4 @@
-# Agentic Studio
+# Skill Blueprint Studio
 
 A local visual authoring prototype for building reviewable Claude skills. Define a process as meaningful input-to-output steps, manage the functions and rules inside each step, and export a skill ZIP with Markdown instructions and supporting assets.
 
@@ -13,7 +13,7 @@ npm start
 
 Open http://127.0.0.1:8766. The server listens on loopback only. Set `STUDIO_PORT` to choose another port. Set `STUDIO_PYTHON` to a Python executable path if needed; otherwise the server uses `python` on Windows and `python3` elsewhere.
 
-You can also open `studio/dist/agentic-studio.html` directly for authoring. Automated source analysis requires the local server.
+You can also open `studio/dist/skill-blueprint-studio.html` directly for authoring. Automated source analysis requires the local server.
 
 ## What you can do
 

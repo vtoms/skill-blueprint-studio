@@ -1,6 +1,8 @@
 import {RESOURCE_INDEX,CONTRACT_FIELDS,draftResource,resourceDisposition,resourceComplete,resourceMarkdown,resourcesMarkdown,parseResourceBundle} from './resources.mjs';
 import {independentReviewState,needsIndependentReview} from './independent-review.mjs';
-export const FORMAT = 'Agentic Studio format 1';
+export const FORMAT = 'Skill Blueprint Studio format 1';
+const LEGACY_FORMAT = 'Agentic Studio format 1';
+function hasPackageFormat(text,heading){return [FORMAT,LEGACY_FORMAT].some(format=>text.startsWith(heading+'\n\n'+format+'\n'));}
 export const PATHS = { process:'references/studio-process.md', definitions:'references/studio-definitions.md', screens:'references/studio-screens.md', examples:'references/studio-examples.md' };
 export const uid = () => 'id-' + (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
 export const copy = value => JSON.parse(JSON.stringify(value));
@@ -198,7 +200,7 @@ export function importMarkdownFiles(files) {
   const title=front.body.match(/^# (.+)$/m)?.[1]||front.name||'Imported skill';const project=blankProject(title);
   project.slug=front.name||slugify(title);project.description=front.description;project.extraFrontmatter=front.extra;project.importWarnings.push(...front.warnings);
   const relativeFiles={};for(const [path,payload]of entries){if(!path.startsWith(prefix)){const resource=preserveSource('_outside-skill/'+path,payload);resource.archivePath=path;if(!safePath(resource.path))throw new Error('Outside-skill source path is too long: '+path);project.originals.push(resource);project.resources.push(draftResource(resource));project.importWarnings.push(`Outside the selected skill folder: ${path}. Its complete bytes are preserved under ${resource.path}; review its role before exporting.`);continue;}const relative=path.slice(prefix.length);if(!safePath(relative))throw new Error('Unsafe path in skill: '+relative);const resource=preserveSource(relative,payload);resource.archivePath=path;project.originals.push(resource);if(relative.endsWith('.md'))relativeFiles[relative]=resource.content;else {project.resources.push(draftResource(resource));project.importWarnings.push(`Source resource retained: ${relative}. ${resourceDisposition(relative)==='generate'?'Convert its behavior into an English implementation specification.':'Keep its data and structure attached with a reviewed Markdown guide.'}`);}}
-  const processEntry=Object.entries(relativeFiles).find(([path,text])=>path!=='SKILL.md'&&text.startsWith('# Process reference\n\n'+FORMAT+'\n'));
+  const processEntry=Object.entries(relativeFiles).find(([path,text])=>path!=='SKILL.md'&&hasPackageFormat(text,'# Process reference'));
   if(processEntry) {
     project.purpose=unquote(textSection(front.body,'## Purpose'));project.input=unquote(textSection(front.body,'## Overall input'));project.instructions=unquote(textSection(front.body,'## Working instructions'));project.outcome=unquote(textSection(front.body,'## Completion'));
     project.steps=blocks(processEntry[1],/^## Step \d+: (.+)\n/gm).map(block=>{
@@ -212,11 +214,11 @@ export function importMarkdownFiles(files) {
         return {id:uid(),title:f.name,type:valueLine(f.body,'Type')||'Instruction',instructions:relocateLinks(unquote(quoted),processEntry[0],'SKILL.md'),definitionId:valueLine(f.body,'Definition key'),override:valueLine(f.body,'Local override'),connection:valueLine(f.body,'Connection'),operation:valueLine(f.body,'Operation')};
       });step.source={path:processEntry[0],start:null,end:null,text:block.body};return step;
     });
-    const definitionEntry=Object.entries(relativeFiles).find(([,t])=>t.startsWith('# Shared definitions\n\n'+FORMAT+'\n'));
+    const definitionEntry=Object.entries(relativeFiles).find(([,t])=>hasPackageFormat(t,'# Shared definitions'));
     if(definitionEntry)project.definitions=blocks(definitionEntry[1],/^## Definition: (.+)\n/gm).map(d=>({id:valueLine(d.body,'Key')||uid(),name:d.name,value:valueLine(d.body,'Value'),runtimeInput:valueLine(d.body,'Runtime input'),intent:unquote(d.body.split('\n').filter(l=>l.startsWith('>')).join('\n'))}));
-    const screenEntry=Object.entries(relativeFiles).find(([,t])=>t.startsWith('# Screen definitions\n\n'+FORMAT+'\n'));
+    const screenEntry=Object.entries(relativeFiles).find(([,t])=>hasPackageFormat(t,'# Screen definitions'));
     if(screenEntry){project.screens.instructions=unquote(textSection(screenEntry[1],'## Presentation instructions'));project.screens.input=blocks(textSection(screenEntry[1],'## Input fields'),/^### Field: (.+)\n/gm).map(f=>{let options=[];try{options=JSON.parse(valueLine(f.body,'Choices'));}catch{}return {id:uid(),label:f.name,type:valueLine(f.body,'Type'),required:valueLine(f.body,'Required')==='yes',defaultValue:valueLine(f.body,'Default'),definitionId:valueLine(f.body,'Definition key'),options};});project.screens.output=textSection(screenEntry[1],'## Output columns').split('\n').filter(l=>l.startsWith('- ')).map(l=>l.slice(2));try{project.screens.sampleRows=JSON.parse(unquote(textSection(screenEntry[1],'## Sample rows')));}catch{}}
-    const exampleEntry=Object.entries(relativeFiles).find(([,t])=>t.startsWith('# Test examples\n\n'+FORMAT+'\n'));if(exampleEntry)project.scenarios=blocks(exampleEntry[1],/^## Scenario: (.+)\n/gm).map(s=>({id:uid(),name:s.name,input:unquote(textSection(s.body,'### Input')),expected:unquote(textSection(s.body,'### Expected result')),status:'Not tested',testedRevision:null,observations:''}));
+    const exampleEntry=Object.entries(relativeFiles).find(([,t])=>hasPackageFormat(t,'# Test examples'));if(exampleEntry)project.scenarios=blocks(exampleEntry[1],/^## Scenario: (.+)\n/gm).map(s=>({id:uid(),name:s.name,input:unquote(textSection(s.body,'### Input')),expected:unquote(textSection(s.body,'### Expected result')),status:'Not tested',testedRevision:null,observations:''}));
     const restoredResources=parseResourceBundle(relativeFiles);if(restoredResources.length){project.resources=restoredResources;project.importWarnings=project.importWarnings.filter(w=>!w.startsWith('Source resource retained:'));}
     const generated=new Set([processEntry[0],definitionEntry?.[0],screenEntry?.[0],exampleEntry?.[0],RESOURCE_INDEX,...restoredResources.map(r=>r.referencePath)]);project.references=Object.entries(relativeFiles).filter(([path])=>path!=='SKILL.md'&&!generated.has(path)).map(([path,content])=>({id:uid(),path,content}));
   }else{
@@ -233,7 +235,7 @@ export function importMarkdownFiles(files) {
 
 export function readProject(text) {
   if(text.length>32*1024*1024)throw new Error('Project file is too large.');const value=JSON.parse(text);
-  if(value?.schemaVersion!==1||!Array.isArray(value.steps)||!Array.isArray(value.references)||!Array.isArray(value.definitions)||!Array.isArray(value.scenarios)||!value.screens)throw new Error('This is not an Agentic Studio project file.');
+  if(value?.schemaVersion!==1||!Array.isArray(value.steps)||!Array.isArray(value.references)||!Array.isArray(value.definitions)||!Array.isArray(value.scenarios)||!value.screens)throw new Error('This is not a Skill Blueprint Studio project file.');
   const strings=['title','slug','description','purpose','input','outcome','instructions'];for(const key of strings)if(typeof value[key]!=='string')throw new Error('Invalid project field: '+key);
   if(value.steps.length>100||value.references.length>100)throw new Error('This prototype supports up to 100 steps and references.');
   for(const s of value.steps){for(const key of ['id','title','kind','job','output'])if(typeof s[key]!=='string')throw new Error('Invalid step field: '+key);if(!Array.isArray(s.facets)||!Array.isArray(s.references)||s.facets.length>100||s.references.some(r=>typeof r!=='string'))throw new Error('Invalid step facets or references.');for(const f of s.facets)for(const key of ['id','title','type','instructions'])if(typeof f[key]!=='string')throw new Error('Invalid facet field.');s.exampleInput=String(s.exampleInput||'');s.exampleOutput=String(s.exampleOutput||'');}

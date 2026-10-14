@@ -18,7 +18,7 @@ test('local server serves the app and analyzes source as data with origin checks
    server.once('exit',code=>{clearTimeout(timeout);reject(new Error('Server exited: '+code+' '+errors));});
   });
   const base='http://127.0.0.1:'+port;
-  const app=await fetch(base);assert.equal(app.status,200);assert.match(await app.text(),/Data processing workflow/);
+  const app=await fetch(base);assert.equal(app.status,200);const html=await app.text();assert.match(html,/Data processing workflow/);assert.match(html,/<title>Skill Blueprint Studio<\/title>/);
   const entries=[{path:'scripts/sample.py',data:Buffer.from('def add(a,b):\n return a+b\n').toString('base64')}];
   const response=await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(entries)});
   assert.equal(response.status,200);const analysis=await response.json();
