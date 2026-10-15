@@ -45,6 +45,7 @@ export function readWorkspace(text){
   const projects=value.projects.map(checkedWorkspaceProject);
   if(new Set(projects.map(container=>container.id)).size!==projects.length)throw new Error('Project identities must be unique.');
   const result={type:WORKSPACE_TYPE,schemaVersion:1,projects};
+  if(value.appearance!==undefined){if(!['light','dark'].includes(value.appearance))throw new Error('Invalid workspace appearance.');result.appearance=value.appearance;}
   if(value.browserImports!==undefined){if(!Array.isArray(value.browserImports)||value.browserImports.length>200||value.browserImports.some(digest=>typeof digest!=='string'||!/^[a-f0-9]{64}$/.test(digest)))throw new Error('Invalid browser migration record.');result.browserImports=[...new Set(value.browserImports)];}
   return result;
 }

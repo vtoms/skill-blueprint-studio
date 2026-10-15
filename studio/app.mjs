@@ -1,3 +1,4 @@
+import {createAppearance} from './appearance.mjs';
 import {SKILL_CHAPTERS,HELP_TOPICS,infoButton,helpHeading,chapterStates,testStatusText} from './ux-content.mjs';
 import {createContextHelp} from './context-help.mjs';
 import {briefChapterMarkup,improveChapterMarkup,rulesFilesMarkup,testsChapterMarkup} from './chapter-view.mjs';
@@ -21,6 +22,7 @@ const contextHelp=createContextHelp({topics:HELP_TOPICS});
 let fieldSequence=0;
 let workspace=emptyWorkspace(),project=null,activeProjectId='',storageReady=false,recoveryText='';
 let storageStatus='loading',storageMessage='',browserMigration=null,browserDigest='';
+const appearance=createAppearance({onChange:theme=>{workspace.appearance=theme;save();}});
 const persistence=createWorkspacePersistence({preview:location.protocol==='file:',onStatus:({state,message})=>{storageStatus=state;storageMessage=message;renderStorageNotice();}});
 let page='projects',view='guided',selected='',tab='definition',referenceId='',referenceTab='files',packageFile='SKILL.md';
 let history=[],future=[],dialogState=null,pendingImport=null,pendingImportProjectId='',importDestination='',importRequestToken=0,restoreRequest={mode:'project',projectId:''},toastTimer=null,previewTab='input',previewValues={};
@@ -62,7 +64,7 @@ async function findBrowserData(){
 }
 async function initializeStorage(){
  storageReady=false;render();document.querySelectorAll('button').forEach(button=>button.disabled=true);$('#content').innerHTML='<div class="notice-box">Opening the local project database…</div>';
- try{const loaded=await persistence.load();const checked=loaded?readWorkspace(JSON.stringify(loaded)):emptyWorkspace();await verifyWorkspaceOptimizationEvidence(checked);workspace=checked;storageReady=true;project=null;activeProjectId='';page='projects';resetSkillView();}
+ try{const loaded=await persistence.load();const checked=loaded?readWorkspace(JSON.stringify(loaded)):emptyWorkspace();await verifyWorkspaceOptimizationEvidence(checked);workspace=checked;appearance.setPreference(workspace.appearance);storageReady=true;project=null;activeProjectId='';page='projects';resetSkillView();}
  catch{/* A failed load must never save an empty workspace over existing data. */}
  document.querySelectorAll('button').forEach(button=>button.disabled=false);render();
  await findBrowserData();

@@ -75,6 +75,12 @@ Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitl
 
 **Explore the demo** opens an optional example project. Its skill intentionally contains one conflicting shared-rule override. Open **Review & package** to inspect it, then remove the override from **Read source data** to use the shared value.
 
+## Light and dark appearance
+
+Use the sun/moon **Light / Dark** button in the header to switch appearance. The initial appearance follows your device setting until you choose a mode. The choice is saved in the local SQLite workspace and used by other browsers connected to that server after reload. It does not use browser storage or change skill instructions, review status, or test results.
+
+Both themes cover the editor, spatial Canvas, forms, previews, dialogs, and info overlays. Standalone-file preview keeps the choice only for that tab. A preference is shared by the local workspace; separate servers have independent preferences.
+
 ## Saving and backups
 
 Projects and skills autosave to the local SQLite database through the server. **Saved to local database** appears after the server acknowledges a committed write. **Saving**, **Changes not saved**, and **Save conflict** distinguish pending or failed writes. Text edits are grouped into saves; avoid closing while a save is pending.

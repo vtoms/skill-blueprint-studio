@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — 2026-10-15
+
+- Add an accessible sun/moon Light/Dark header switch with system appearance as the initial default.
+- Apply shared semantic color tokens to every page, form, dialog, help overlay, preview and SVG flowchart.
+- Save explicit appearance in the local SQLite workspace, shared across browsers after reload, without browser-storage writes or skill changes.
+- Preserve existing databases and empty templates; accept optional validated appearance in the workspace format without a schema migration.
+- Keep standalone preview appearance in memory. Add backup-validation coverage and verify theme persistence, mobile layout and unchanged skill/review state.
+- No runtime dependencies or external theme components were added.
+
 ## 0.7.0 — 2026-10-15
 
 - Reorganize skill editing into Brief, Steps, Rules & files, Input & output, Review & package, Test in Claude, and Improve; keep every section directly accessible.

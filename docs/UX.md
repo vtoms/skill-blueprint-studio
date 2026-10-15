@@ -54,3 +54,7 @@ The decisions also draw on these primary sources and published guidance:
 | [Microsoft Visio: Connectors](https://support.microsoft.com/en-us/visio/add-connectors-between-visio-shapes) | Directional connections that follow moved process shapes |
 
 Standards, product documentation and expert guidance support these choices; they do not establish that this application has an empirically optimal UX. No representative-user usability study has been completed.
+
+## Appearance
+
+The persistent header switch shows the current Light or Dark mode, with a sun/moon icon, a descriptive action label, keyboard activation and pressed state. The system preference is the initial default; choosing a mode overrides later system changes. The choice is saved in the local workspace database. Switching changes shared semantic CSS tokens and native control color-scheme without rerendering the editor or touching skill instructions. SVG artwork and connectors use those same tokens. Both modes retain blue primary actions and distinct warning/error colors.

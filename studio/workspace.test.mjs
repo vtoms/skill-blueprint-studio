@@ -33,3 +33,8 @@ test('corrupt backups and duplicate identities are rejected rather than partly l
 test('browser migration markers survive backups and malformed markers are rejected',()=>{
   const workspace=emptyWorkspace();workspace.browserImports=['a'.repeat(64)];assert.deepEqual(readWorkspace(JSON.stringify(workspace)),workspace);workspace.browserImports=['invalid'];assert.throws(()=>readWorkspace(JSON.stringify(workspace)),/migration record/);
 });
+test('workspace appearance is optional, survives backups and rejects unsupported settings',()=>{
+  const workspace=emptyWorkspace();assert.equal(readWorkspace(JSON.stringify(workspace)).appearance,undefined);
+  for(const appearance of ['light','dark']){workspace.appearance=appearance;assert.equal(readWorkspace(JSON.stringify(workspace)).appearance,appearance);}
+  for(const appearance of [null,{},'invalid']){workspace.appearance=appearance;assert.throws(()=>readWorkspace(JSON.stringify(workspace)),/appearance/);}
+});

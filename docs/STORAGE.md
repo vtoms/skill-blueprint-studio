@@ -62,3 +62,9 @@ Each kept optimization is a separate skill in its project, with a frozen baselin
 An optional skill `diagram` object stores layout schema version 1 and step positions by stable step identity. Coordinates are finite, bounded, and validated on backup/database parsing. Inserting a step allocates a free position; deleting it removes its position. Older skills without layout metadata use automatic arrangement without a database migration.
 
 Layout changes save through the same SQLite revision/conflict controls and appear in project/workspace backups. They do not increment the skill's instruction revision, alter run order, invalidate independent review evidence, or make recorded results stale. A new AI-improved version gets fresh step identities and automatic layout; its frozen baseline retains the source arrangement. Viewport pan and zoom are temporary presentation state. The database schema and empty template remain unchanged.
+
+## Workspace appearance
+
+The optional workspace-level `appearance` value accepts `light` or `dark`. An absent preference follows the device color-scheme setting. An explicit choice is saved through the same SQLite transactions, acknowledged saves and conflict protection as other workspace changes. Other browsers use it after reload; it is not live-synchronized. Separate servers keep independent settings. The workspace/database schema version remains 1 and older workspaces remain valid. The empty database template is unchanged.
+
+Appearance is outside every skill, so toggling it does not change skill revision, generated instructions, independent review evidence, or test freshness. Workspace backups and database snapshots include the preference; restoring projects adds their content while retaining the current workspace's appearance. Project and individual-skill backups do not carry UI preferences. Standalone-file preview holds the choice in memory only. No new browser storage is used.
