@@ -25,3 +25,5 @@ The Node suite covers workflow compilation, source preservation, independent rev
 For schema changes, update the database version and provide a preserving migration. Regenerate the template with `npm run db:template` and verify that it contains only an empty workspace. Commit the template, its generator, tests, and storage documentation together.
 
 Keep personal projects, working database files, original test archives, credentials, and generated user backups out of commits. The tracked SQLite template is the sole database file intended for distribution. Update the runtime/provenance inventory when adding a dependency or reusing external code. Contributions to this application's source are distributed under its MIT license.
+
+Optimization changes must preserve the separate source version, baseline digest checks, complete step/facet ownership, resource and tool bindings, strict sequence-lock option, stale-source/revision checks, cancellation and reset evidence. Keep model output as an untrusted proposal. Test dynamic form text as well as the comparison for HTML execution. Fixtures must remain small, self-authored and generic.

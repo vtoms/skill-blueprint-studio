@@ -3,6 +3,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {join,resolve,dirname,basename} from 'node:path';
 import {SKILL_DRAFT_SCHEMA,skillFromDraft} from './skill-draft.mjs';
+import {OPTIMIZATION_SCHEMA,OPTIMIZATION_SYSTEM_PROMPT,optimizationContext,skillFromOptimization} from './skill-optimization.mjs';
 
 export const DRAFTING_SYSTEM_PROMPT=`You draft a fresh skill for Skill Blueprint Studio, a visual authoring application. Return only the requested structured blueprint. Do not run the skill or claim any test has passed.
 Use a short sequence of meaningful input-to-output steps. Each step runs in order; its input is the preceding step's output. Put instructions, rules, conditional choices, tools, exceptions and references INSIDE the relevant step as facets. There are no graph branches or executable routing between steps.
@@ -24,8 +25,8 @@ export function invokeClaude(executable,args,{input='',cwd,timeout=300000,signal
  });
 }
 
-export function draftingArguments(model=''){
- return ['--print','--safe-mode','--restricted','--no-session-persistence','--no-chrome','--disable-slash-commands','--tools','','--disallowedTools','mcp__*','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--settings','{"disableAllHooks":true}','--permission-mode','manual','--effort','medium','--max-turns','4','--output-format','json','--json-schema',JSON.stringify(SKILL_DRAFT_SCHEMA),'--system-prompt',DRAFTING_SYSTEM_PROMPT,...(model?['--model',model]:[])];
+export function draftingArguments(model='',schema=SKILL_DRAFT_SCHEMA,systemPrompt=DRAFTING_SYSTEM_PROMPT){
+ return ['--print','--safe-mode','--restricted','--no-session-persistence','--no-chrome','--disable-slash-commands','--tools','','--disallowedTools','mcp__*','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','--settings','{"disableAllHooks":true}','--permission-mode','manual','--effort','medium','--max-turns','4','--output-format','json','--json-schema',JSON.stringify(schema),'--system-prompt',systemPrompt,...(model?['--model',model]:[])];
 }
 
 function cliFailure(error){
@@ -61,5 +62,19 @@ export function createClaudeDrafting({dataDirectory,environment=process.env,run=
   }catch(error){if(error.code||error.name==='AbortError')throw cliFailure(error);throw error;}
   finally{busy=false;if(folder){if(dirname(folder)!==root||!basename(folder).startsWith('draft-'))throw new Error('Invalid draft cleanup location.');await rm(folder,{recursive:true,force:true});}}
  }
- return {status,generate};
+ async function optimize(source,options={}, {signal}={}){
+  const input=optimizationContext(source,options);
+  if(busy){const error=new Error('Another skill draft or optimization is in progress. Try again when it finishes.');error.status=409;throw error;}
+  busy=true;let folder;
+  try{
+   const available=await status();if(!available.ready)throw new Error(available.message);
+   folder=await mkdtemp(join(root,'draft-'));
+   const output=await run(executable,draftingArguments(model,OPTIMIZATION_SCHEMA,OPTIMIZATION_SYSTEM_PROMPT),{cwd:folder,signal,input,timeout:300000});
+   let result;try{result=JSON.parse(output);}catch{throw new Error('Claude did not return a structured optimization. Try again.');}
+   if(result.is_error||!result.structured_output)throw new Error('Claude could not produce a complete optimization proposal.');
+   return await skillFromOptimization(source,result.structured_output,{...options,model:Object.keys(result.modelUsage||{}).join(', ')||model||'Claude Code default'});
+  }catch(error){if(error.code||error.name==='AbortError')throw cliFailure(error);throw error;}
+  finally{busy=false;if(folder){if(dirname(folder)!==root||!basename(folder).startsWith('draft-'))throw new Error('Invalid draft cleanup location.');await rm(folder,{recursive:true,force:true});}}
+ }
+ return {status,generate,optimize};
 }

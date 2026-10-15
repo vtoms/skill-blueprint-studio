@@ -5,6 +5,9 @@ import {resolve,extname,sep} from 'node:path';
 import {execFile} from 'node:child_process';
 import {openWorkspaceDatabase} from './workspace-database.mjs';
 import {createClaudeDrafting} from './claude-drafting.mjs';
+import {readWorkspace} from './workspace.mjs';
+import {verifyWorkspaceOptimizationEvidence} from './independent-review.mjs';
+import {requestOptimization} from './optimization-request.mjs';
 
 const root=fileURLToPath(new URL('.',import.meta.url));
 const port=Number(process.env.STUDIO_PORT||8766);
@@ -38,6 +41,13 @@ async function analyzeRequest(req){
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
+  if(pathname==='/api/skill-optimize'){
+   try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
+   if(req.method!=='POST'){jsonResponse(res,405,{error:'Use POST for skill optimization.'});return;}
+   const controller=new AbortController();res.once('close',()=>{if(!res.writableEnded)controller.abort();});
+   try{const input=await readDatabaseRequest(req,16000),result=await requestOptimization({readWorkspace:()=>workspaceDatabase.read().workspace,engine:drafting},input,{signal:controller.signal});if(!res.destroyed)jsonResponse(res,200,result);}
+   catch(error){if(!res.destroyed)jsonResponse(res,error.status||400,{error:error.message});}return;
+  }
   if(pathname==='/api/skill-draft'){
    try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
    if(req.method==='GET'){jsonResponse(res,200,await drafting.status(true));return;}
@@ -50,9 +60,9 @@ const server=createServer(async(req,res)=>{
   }
   if(pathname==='/api/workspace'){
    try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
-   if(req.method==='GET'){jsonResponse(res,200,{...workspaceDatabase.read(),storage:{engine:'SQLite',database:workspaceDatabase.path}});return;}
+   if(req.method==='GET'){try{const current=workspaceDatabase.read();await verifyWorkspaceOptimizationEvidence(current.workspace);jsonResponse(res,200,{...current,storage:{engine:'SQLite',database:workspaceDatabase.path}});}catch(error){jsonResponse(res,500,{error:error.message});}return;}
    if(req.method==='PUT'){
-    try{const input=await readDatabaseRequest(req);if(!input||typeof input!=='object')throw new Error('Invalid database request.');const saved=workspaceDatabase.write(input.workspace,input.revision);jsonResponse(res,200,{revision:saved.revision,updatedAt:saved.updatedAt});}
+    try{const input=await readDatabaseRequest(req);if(!input||typeof input!=='object')throw new Error('Invalid database request.');const checked=readWorkspace(JSON.stringify(input.workspace));await verifyWorkspaceOptimizationEvidence(checked);const saved=workspaceDatabase.write(checked,input.revision);jsonResponse(res,200,{revision:saved.revision,updatedAt:saved.updatedAt});}
     catch(error){jsonResponse(res,error.status||400,{error:error.message});}return;
    }
    jsonResponse(res,405,{error:'Use GET or PUT for the workspace.'});return;

@@ -10,6 +10,8 @@ Choose **Add skill**, then **Create a fresh skill** or **Import an existing skil
 
 Prompt-generated drafts include the brief, workflow steps, inner facets, Markdown references, screen definitions and test scenarios. **Review prompt setup** exposes assumptions and open questions. Confirmed answers become shared definitions. Each generated step requires separate confirmation, and test scenarios start as **Not tested**. See the [prompt setup guide](docs/PROMPT_SETUP.md).
 
+After import, choose **Add & optimize a copy**, or use **Create optimized version** in the workflow editor. AI can clarify instructions and propose reordered, combined or split steps in a separate draft. Review the before/after comparison, resolve its questions, then edit and test it. The source and frozen baseline remain available; approvals and successful test results do not transfer. Disable resequencing to keep the exact current order. See the [optimization and versions guide](docs/OPTIMIZATION.md).
+
 The editor opens in **Step by step**. Switch to **List** or the optional **Canvas** view to work with the same skill, steps, facets, references, and rules. The canvas currently represents a sequential process. Free graph connections and executable branching are not implemented.
 
 Edit the selected step in the shared detail panel: **Contract**, **Inside**, **Example**, and **Source** for imported steps. Text changes save as you type. View changes preserve the selected step and expanded facets. Canvas cards show the main steps and their input/output contracts; inner functions and files stay inside the step. List provides a compact overview, and Step by step provides a navigation rail alongside the same editor.
@@ -22,7 +24,7 @@ Use the project breadcrumb or **Project skills** to return to the skill list, an
 
 Requirements: Node.js 24.15 or later, Python 3.12 or later for source analysis, and a modern browser. No npm/pip package installation or API key is needed. The server uses Node's built-in SQLite module.
 
-Prompt generation additionally requires the native Claude Code CLI **2.1.299 or later**, signed in as the operating-system user running the server. Run `claude auth login` in that user's terminal. Drafting uses the CLI's configured account and model; account limits and provider billing apply. Set `STUDIO_CLAUDE_PATH` when the native executable is not detected and `STUDIO_CLAUDE_MODEL` to select a specific supported model or alias. Manual authoring and import remain available without Claude Code.
+Prompt generation and AI optimization additionally require the native Claude Code CLI **2.1.299 or later**, signed in as the operating-system user running the server. Run `claude auth login` in that user's terminal. Drafting uses the CLI's configured account and model; account limits and provider billing apply. Set `STUDIO_CLAUDE_PATH` when the native executable is not detected and `STUDIO_CLAUDE_MODEL` to select a specific supported model or alias. Manual authoring and import remain available without Claude Code.
 
 ```sh
 npm run build
@@ -44,6 +46,7 @@ Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitl
 - Define inner functions, decisions, tool contracts, exceptions, shared rules, and references.
 - Specify input fields, output columns, presentation rules, and illustrative screen data.
 - Import Markdown or a skill ZIP, retain complete original bytes, and review heading-based proposed steps.
+- Generate a separate optimized version with optional resequencing, complete source/facet mapping, frozen comparisons and fresh review/test requirements.
 - Draft English Markdown specifications from Python and HTML source without executing imported programs.
 - Keep data and structural assets unchanged, with structural inventories for supported formats.
 - Record acceptance scenarios and runtime observations.
@@ -94,7 +97,7 @@ Projects are stored in a local database. This release is a local single-workspac
 
 ## Code and license
 
-The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database and drafting adapters, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation invokes a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
+The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database, drafting and optimization adapters, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation and optimization invoke a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
 
 The application is licensed under [MIT](LICENSE). See [the provenance and runtime inventory](studio/THIRD_PARTY_APPLICATION.md). Runtime binaries are not distributed with this repository.
 

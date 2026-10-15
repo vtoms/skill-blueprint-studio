@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 — 2026-10-15
+
+- Add AI optimization after import and in the workflow editor through the existing optional Claude Code CLI.
+- Create separate derived drafts with a frozen baseline, original/proposed comparison, source/facet mappings and model provenance.
+- Allow step reordering, merging and splitting, or enforce the exact existing sequence.
+- Preserve source bytes, asset/reference bindings, shared rules, tool settings, screens and expected scenarios; reset approvals and test observations.
+- Carry unresolved decisions forward and require optimization setup review, step confirmation and fresh independent import review.
+- Reject incomplete coverage, invalid metadata, corrupted baseline evidence, stale sources and cancelled requests; preserve unsaved drafts on database conflicts.
+- Escape dynamic form labels and keep dialog actions visible while long comparisons scroll.
+- Document version storage, privacy, scope, external runtime terms and validation limits.
+
 ## 0.5.0 — 2026-10-15
 
 - Add prompt-first fresh skill setup through a separately installed, signed-in Claude Code CLI.

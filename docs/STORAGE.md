@@ -52,3 +52,7 @@ Keep downloaded backups outside the repository. If a save fails, retry or downlo
 The last five previous states can be inspected in `workspace_history` with SQLite tooling while the server is stopped. This is a limited recovery aid, not a replacement for independent backups. There is no UI for browsing those snapshots yet.
 
 `npm run db:template` rebuilds only `studio/seed/workspace.sqlite`. It does not touch `.local-data`. The template's schema and initial data are MIT-licensed application content; SQLite's engine is provided by Node.js and is public domain.
+
+## Optimization versions
+
+Each kept optimization is a separate skill in its project, with a frozen baseline and proposal. Working databases and project/workspace backups contain these records and retained source assets; Git contains no working versions. Baselines exclude prior optimization/reviewer history to avoid recursive growth, but complete original source bytes remain preserved. SHA-256 checks validate baseline integrity on database API reads/writes and browser restore. Snapshots increase backup size; existing size limits still apply. See [AI optimization](OPTIMIZATION.md).

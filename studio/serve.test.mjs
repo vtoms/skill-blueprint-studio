@@ -32,6 +32,18 @@ test('local server serves the app, persists projects, rejects stale writes, and 
   const drafting=await (await fetch(base+'/api/skill-draft')).json();assert.equal(drafting.ready,false);assert.match(drafting.message,/not installed/);
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:'short'})})).status,400);
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:JSON.stringify({prompt:'Create a record review skill.'})})).status,403);
+  assert.equal((await fetch(base+'/api/skill-optimize')).status,405);
+  assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:'{}'})).status,403);
+  assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'text/plain'},body:'{}'})).status,400);
+  assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,400);
+  const {optimizationSource,optimizationProposal}=await import('./optimization-test-support.mjs'),{skillFromOptimization,optimizationDigest}=await import('./skill-optimization.mjs');
+  const savedState=await (await fetch(base+'/api/workspace')).json(),source=optimizationSource(),derived=await skillFromOptimization(source,optimizationProposal(source));savedState.workspace.projects[0].skills.push(source,derived);
+  const writeState=value=>fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});
+  assert.equal((await writeState({revision:savedState.revision,workspace:savedState.workspace})).status,200);
+  const request={projectId:savedState.workspace.projects[0].id,skillId:source.id,sourceDigest:await optimizationDigest(source),checkOnly:true};
+  assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)})).status,200);
+  request.sourceDigest='0'.repeat(64);assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)})).status,409);
+  const intact=await (await fetch(base+'/api/workspace')).json();intact.workspace.projects[0].skills[1].optimization.baseline.steps[0].job+=' corrupted';assert.equal((await writeState({revision:intact.revision,workspace:intact.workspace})).status,400);assert.equal((await (await fetch(base+'/api/workspace')).json()).revision,intact.revision);
   const entries=[{path:'scripts/sample.py',data:Buffer.from('def add(a,b):\n return a+b\n').toString('base64')}];
   const response=await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(entries)});
   assert.equal(response.status,200);const analysis=await response.json();
