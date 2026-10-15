@@ -4,6 +4,8 @@ The application-specific HTML, CSS, JavaScript, workflow model, canvas, import/e
 
 This inventory describes the project's source and dependencies; it is not a guarantee that every generated expression is unique.
 
+The 0.9.1 ZIP descriptor, hierarchy and path/link changes and synthetic regression fixtures were authored for this project under MIT. PKWARE's ZIP format specification informed compatibility decisions; its text and external parser code are not bundled. No dependency or vendored component was added.
+
 Claude Design, using Opus 5.5, provided an external assessment of the complete public project, wording and user journey. Published UX/accessibility guidance also informed the redesign. The application's implementation was authored separately; the assessment's exported prototype, custom elements, support script, and remote fonts are not included in this repository.
 
 | Component | Use | License and distribution |

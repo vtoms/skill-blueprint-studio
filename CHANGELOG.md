@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 — 2026-10-15
+
+- Verify signed and unsigned ZIP32 data descriptors, local streaming metadata and complete entry ranges. Reject missing, truncated and inconsistent descriptors, malformed extra fields and unsupported ZIP64 metadata.
+- Reject explicit and implicit file/folder conflicts during ZIP import and export. Verify empty directory entries, including deflated directories, without turning them into source files.
+- Preserve reserved filename characters in generated and relocated Markdown links. Decode local targets once, reject encoded absolute/drive paths and invalid control/Unicode values, and preserve literal percent names and distinct Unicode spellings.
+- Add deterministic archive mutation/truncation checks, package link round trips and browser coverage for failed import followed by a valid streamed retry. No application dependency, database schema or license change.
+
 ## 0.9.0 — 2026-10-15
 
 - Preserve special object-key filenames through ZIP reading, source import, compiler output and downloads; reject inconsistent, overlapping and malformed archive metadata.
