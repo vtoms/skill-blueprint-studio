@@ -11,7 +11,9 @@ export function validateOptimizationRecord(record,readSkill){
  if(!Array.isArray(record.assumptions)||record.assumptions.length>200||record.assumptions.some(text=>!string(text))||!Array.isArray(record.questions)||record.questions.length>200||record.questions.some(question=>!question||Object.keys(question).some(key=>!['id','text','answer','definitionId'].includes(key))||!string(question.id,150)||!question.id||!string(question.text)||!string(question.answer)||!string(question.definitionId,150))||new Set(record.questions.map(question=>question.id)).size!==record.questions.length)fail();
  const snapshot=record.proposalSnapshot;
  if(!snapshot||Object.keys(snapshot).length!==2||!string(snapshot.instructions)||!Array.isArray(snapshot.steps)||!snapshot.steps.length||snapshot.steps.length>100)fail();
- const proposal=readSkill(JSON.stringify({...baseline,instructions:snapshot.instructions,steps:snapshot.steps}));
+ // Baseline coordinates refer to the source identities, not the new proposal steps.
+ const proposalValue={...baseline,instructions:snapshot.instructions,steps:snapshot.steps};delete proposalValue.diagram;
+ const proposal=readSkill(JSON.stringify(proposalValue));
  const oldSteps=new Map(baseline.steps.map(step=>[step.id,step])),oldFacets=new Map(baseline.steps.flatMap(step=>step.facets.map(facet=>[facet.id,{step,facet}]))),seenSteps=new Set(),seenFacets=new Set(),proposalIds=new Set(),facetIds=new Set();
  if(oldSteps.size!==baseline.steps.length||oldFacets.size!==baseline.steps.reduce((total,step)=>total+step.facets.length,0)||!Array.isArray(record.mapping)||record.mapping.length!==proposal.steps.length||!record.allowResequence&&proposal.steps.length!==baseline.steps.length)fail();
  const equalSet=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===new Set(a).size&&a.length===new Set(b).size&&a.every(value=>b.includes(value));

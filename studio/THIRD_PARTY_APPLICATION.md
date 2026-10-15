@@ -4,7 +4,7 @@ The application-specific HTML, CSS, JavaScript, workflow model, canvas, import/e
 
 This inventory describes the project's source and dependencies; it is not a guarantee that every generated expression is unique.
 
-An external design assessment informed the editor layout. The application's implementation was authored separately; the assessment's exported prototype, custom elements, support script, and remote fonts are not included in this repository.
+Claude Design, using Opus 5.5, provided an external assessment of the complete public project, wording and user journey. Published UX/accessibility guidance also informed the redesign. The application's implementation was authored separately; the assessment's exported prototype, custom elements, support script, and remote fonts are not included in this repository.
 
 | Component | Use | License and distribution |
 |---|---|---|
@@ -24,3 +24,5 @@ Supported runtime baseline: Node.js 24.15 or later and Python 3.12 or later. Val
 Optional prompt drafting and optimization require Claude Code 2.1.299 or later. The adapter was validated against that version using a signed-in account. Automated tests substitute model responses and do not require provider access; live drafting and optimization consume the configured account's usage. No API key is copied into the browser, database template, or repository.
 
 The optimization model, version metadata validation, comparison UI, preservation logic and request adapter are authored for this project under MIT. They reuse existing project modules and native Web Crypto; no additional application package or vendored code was added for optimization.
+
+The 0.7.0 journey, copy/help map, SVG connectors, layout geometry, pointer/pinch/keyboard controls, text outline and help overlay were implemented in project code under MIT. They use browser DOM/SVG/Popover APIs and existing project modules. No React Flow, diagramming framework, external icon/font package, Design prototype component or support script was added. Research links in [the UX guide](../docs/UX.md) are references, not runtime dependencies. External design services and separately installed development browsers are not licensed or distributed by this repository.

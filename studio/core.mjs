@@ -1,3 +1,4 @@
+import {validateDiagramLayout} from './diagram-layout.mjs';
 import {validateOptimizationRecord} from './optimization-record.mjs';
 import {RESOURCE_INDEX,CONTRACT_FIELDS,draftResource,resourceDisposition,resourceComplete,resourceMarkdown,resourcesMarkdown,parseResourceBundle} from './resources.mjs';
 import {independentReviewState,needsIndependentReview} from './independent-review.mjs';
@@ -82,14 +83,14 @@ export function validate(project) {
   if(!project.outcome.trim())add('Define the final output.',null,'project');
   if(/^---\s*$/m.test(project.extraFrontmatter||'')||/^(?:name|description):/m.test(project.extraFrontmatter||''))add('Imported metadata must not redefine name/description or add a frontmatter delimiter.',null,'project');
   if(!project.steps.length)add('Add at least one meaningful step.',null,'workflow');
-  if(project.generation&&!project.generation.reviewed)add('Review the prompt setup, assumptions, and open questions.',null,'generation');
+  if(project.generation&&!project.generation.reviewed)add('Review the draft decisions, assumptions, and open questions.',null,'generation');
   if(project.generation?.questions.some(question=>!question.answer.trim()))add('Answer the open setup questions before export.',null,'generation');
   for(const question of project.generation?.questions||[])if(question.answer.trim()){const definition=project.definitions.find(definition=>definition.id===question.definitionId);if(!definition||definition.value!==question.answer)add('A setup answer is missing from the shared definitions or has changed. Review the prompt setup.',null,'generation');}
-  if(project.optimization&&!project.optimization.reviewed)add('Review the optimization assumptions, questions and proposed changes.',null,'optimization');
-  for(const question of project.optimization?.questions||[]){const definition=project.definitions.find(definition=>definition.id===question.definitionId);if(!question.answer.trim()||!definition||definition.value!==question.answer)add('Resolve the optimization questions and save their answers as shared definitions.',null,'optimization');}
+  if(project.optimization&&!project.optimization.reviewed)add('Review the proposed changes, assumptions, and carried questions.',null,'optimization');
+  for(const question of project.optimization?.questions||[]){const definition=project.definitions.find(definition=>definition.id===question.definitionId);if(!question.answer.trim()||!definition||definition.value!==question.answer)add('Resolve the carried questions and save their answers as shared values.',null,'optimization');}
   const ids=new Set();const definitionIds=new Set(project.definitions.map(d=>d.id));
   for(const definition of project.definitions) {
-    if(!definition.name.trim()||!definition.value.trim())add('Complete the name and value of every shared definition.',null,'definitions');
+    if(!definition.name.trim()||!definition.value.trim())add('Complete the name and value of every shared value.',null,'definitions');
     if(definition.runtimeInput&&!project.screens.input.some(f=>f.label===definition.runtimeInput))add(`${definition.name} reads a runtime input field that is missing: ${definition.runtimeInput}.`,null,'definitions');
   }
   for(const step of project.steps) {
@@ -100,11 +101,11 @@ export function validate(project) {
     if(step.inputReview)add('Confirm that this step still fits its changed input.',step.id,'input-change');
     if(!step.reviewed)add(project.generation||project.optimization?'Review this proposed generated step and confirm its input, job, and output.':'Review this proposed imported step and confirm its input, job, and output.',step.id);
     for(const facet of step.facets) {
-      if(!facet.title.trim()||!facet.instructions.trim())add('Complete each facet’s name and instructions.',step.id,'facets');
-      if(facet.definitionId&&!definitionIds.has(facet.definitionId))add('A facet uses a shared definition that no longer exists.',step.id,'facets');
+      if(!facet.title.trim()||!facet.instructions.trim())add('Complete each inside item’s name and instructions.',step.id,'facets');
+      if(facet.definitionId&&!definitionIds.has(facet.definitionId))add('An inside item uses a shared value that no longer exists.',step.id,'facets');
       const def=project.definitions.find(d=>d.id===facet.definitionId);
       if(def&&facet.override&&facet.override!==def.value)add(`${facet.title} overrides ${def.name}: “${facet.override}” versus the shared “${def.value}”.`,step.id,'facets');
-      if(facet.type==='Tool'&&(!facet.connection?.trim()||!facet.operation?.trim()))add('Specify the MCP connection and operation for this tool facet.',step.id,'facets');
+      if(facet.type==='Tool'&&(!facet.connection?.trim()||!facet.operation?.trim()))add('Specify the configured connection and operation for this tool.',step.id,'facets');
     }
     for(const path of step.references)if(!project.references.some(r=>r.path===path))add(`Missing linked reference: ${path}`,step.id,'references');
     for(const id of step.resourceIds||[])if(!(project.resources||[]).some(r=>r.id===id))add('A linked resource no longer exists.',step.id,'resources');
@@ -254,6 +255,7 @@ export function readProject(text) {
   value.resources=Array.isArray(value.resources)?value.resources:[];if(value.resources.length>500)throw new Error('This prototype supports up to 500 resources.');for(const r of value.resources){for(const key of ['id','sourcePath','referencePath','policy'])if(typeof r[key]!=='string')throw new Error('Invalid resource field: '+key);if(!safePath(r.sourcePath)||!safePath(r.referencePath)||!['generate','retain','document'].includes(r.policy))throw new Error('Invalid resource path or disposition.');for(const key of [...CONTRACT_FIELDS,'structure','sourceHash'])r[key]=String(r[key]||'');r.untranslated=Array.isArray(r.untranslated)?r.untranslated.map(String):['Missing translation status'];r.dependencies=Array.isArray(r.dependencies)?r.dependencies:[];if(r.dependencies.some(path=>typeof path!=='string'||!safePath(path)))throw new Error('Invalid resource dependency.');r.reviewed=r.reviewed===true;}
   for(const s of value.steps){if(s.inputReview!==undefined){const previous=s.inputReview?.previous;if(!previous||['id','title','output'].some(key=>typeof previous[key]!=='string'))throw new Error('Invalid input review state.');}s.resourceIds=Array.isArray(s.resourceIds)?s.resourceIds:[];if(s.resourceIds.some(id=>typeof id!=='string'))throw new Error('Invalid step resource bindings.');}
   if(value.generation!==undefined){const generation=value.generation;if(!generation||generation.provider!=='claude-cli'||typeof generation.prompt!=='string'||generation.prompt.length>20000||typeof generation.model!=='string'||typeof generation.createdAt!=='string'||!Number.isFinite(Date.parse(generation.createdAt))||!Array.isArray(generation.assumptions)||generation.assumptions.length>30||generation.assumptions.some(text=>typeof text!=='string'||text.length>2000)||!Array.isArray(generation.questions)||generation.questions.length>30||generation.questions.some(question=>!question||typeof question.id!=='string'||typeof question.text!=='string'||typeof question.answer!=='string'||typeof question.definitionId!=='string'))throw new Error('Invalid prompt setup metadata.');generation.reviewed=generation.reviewed===true;}
+  validateDiagramLayout(value);
   if(value.optimization!==undefined)validateOptimizationRecord(value.optimization,readProject);
   value.importWarnings=Array.isArray(value.importWarnings)?value.importWarnings.map(String):[];value.extraFrontmatter=String(value.extraFrontmatter||'');value.revision=Number.isSafeInteger(value.revision)&&value.revision>0?value.revision:1;return value;
 }

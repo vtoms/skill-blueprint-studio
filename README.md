@@ -8,17 +8,37 @@ The app always opens on **Projects**, including after a reload. Create a project
 
 Choose **Add skill**, then **Create a fresh skill** or **Import an existing skill**. A fresh skill starts with **Start with a prompt**: describe its goal, inputs, outputs, rules, tools and exceptions, generate a draft through your local Claude Code CLI, review it, and open the editor. **Start blank** provides manual authoring. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
 
-Prompt-generated drafts include the brief, workflow steps, inner facets, Markdown references, screen definitions and test scenarios. **Review prompt setup** exposes assumptions and open questions. Confirmed answers become shared definitions. Each generated step requires separate confirmation, and test scenarios start as **Not tested**. See the [prompt setup guide](docs/PROMPT_SETUP.md).
+Skills open on **Brief**. The editor follows seven directly accessible sections:
 
-After import, choose **Add & optimize a copy**, or use **Create optimized version** in the workflow editor. AI can clarify instructions and propose reordered, combined or split steps in a separate draft. Review the before/after comparison, resolve its questions, then edit and test it. The source and frozen baseline remain available; approvals and successful test results do not transfer. Disable resequencing to keep the exact current order. See the [optimization and versions guide](docs/OPTIMIZATION.md).
+1. **Brief** — describe the skill, its overall input and final result, and instructions that apply throughout.
+2. **Steps** — define the meaningful transformations and handoffs.
+3. **Rules & files** — manage shared values, reference documents, supporting files, and original source.
+4. **Input & output** — describe the input fields and result presentation; preview illustrative rows.
+5. **Review & package** — resolve structural issues and required independent review, inspect generated instructions, then download.
+6. **Test in Claude** — run the downloaded skill externally and record what actually happened.
+7. **Improve** — ask Claude to propose a separate version, compare it with the frozen baseline, and review its decisions.
 
-The editor opens in **Step by step**. Switch to **List** or the optional **Canvas** view to work with the same skill, steps, facets, references, and rules. The canvas currently represents a sequential process. Free graph connections and executable branching are not implemented.
+The numbered navigation and Previous/Next links suggest an order without locking sections. Mobile uses a section picker. Info buttons open contextual explanations in one accessible overlay; essential errors, review requirements, and provider transmission notices remain visible. See the [UX and Canvas guide](docs/UX.md).
 
-Edit the selected step in the shared detail panel: **Contract**, **Inside**, **Example**, and **Source** for imported steps. Text changes save as you type. View changes preserve the selected step and expanded facets. Canvas cards show the main steps and their input/output contracts; inner functions and files stay inside the step. List provides a compact overview, and Step by step provides a navigation rail alongside the same editor.
+Prompt-generated drafts include the brief, steps, inside items, reference documents, screen definitions and tests. **Review draft decisions** in Brief exposes assumptions and open questions. Answers become shared values. Each proposed step requires confirmation; tests begin **Not run yet**. See [prompt setup](docs/PROMPT_SETUP.md).
 
-Canvas offers an insertion point between every pair of steps. Use the order buttons, or Alt+Up/Down on a focused Canvas card or List step, to reorder. When insertion, deletion, or movement changes an existing step's predecessor, its **Input changed** check records the earlier contract and survives reload and backups. Review the affected instructions and confirm that the new input fits before export. Undo restores both the order and review state. **Show Markdown** previews the current draft through the actual package compiler.
+After import, choose **Add & improve a copy**, or open **Improve → Create improved version** later. AI can clarify instructions and propose reordered, combined or split steps in a separate draft. The original remains intact; frozen comparisons preserve the generated proposal even after later edits. Confirmations, independent review and actual test results must be obtained again. Disable resequencing to keep the current order. See [optimization and versions](docs/OPTIMIZATION.md).
 
-Use the project breadcrumb or **Project skills** to return to the skill list, and **Projects** to return to the directory. The demo is an explicit **Explore the demo** option.
+**Steps** offers three views of the same skill:
+
+| View | Primary job |
+|---|---|
+| Step by step | Focus on writing one step alongside an ordered navigation rail |
+| List | Scan contracts and checks, filter steps needing attention, and adjust run order |
+| Canvas | Understand and arrange the process as a two-dimensional connected flowchart |
+
+Canvas has movable shapes, start/finish boundaries, labelled arrows, insertion points, pan, zoom, Fit, Focus step and Auto arrange. Layout is saved with the skill and included in backups. Dragging a shape changes its picture position; **Run earlier/later** changes execution order. Buttons and keyboard controls provide alternatives to dragging. A text outline exposes the ordered process. Canvas remains spatial on mobile, with the editor below it.
+
+Edit **Needs → Does → Produces**, **Inside this step**, **Example**, and **Original source** for imported steps. Text changes save as you type; view switches preserve selection and expanded inside items. Inner rules, tools and files stay with their step. The process remains sequential: free graph connections and executable branches are not implemented.
+
+When insertion, deletion or reordering changes a step's predecessor, **Check new input** records the earlier handoff and survives reload and backups. Review affected instructions and confirm the new input before download. Undo restores the order and review state. Layout-only changes do not alter skill revision, invalidate independent review, or make test results stale.
+
+Use the project breadcrumb or **Project skills** to return to the skill list, and **Projects** to return to the directory. The demo remains an explicit **Explore the demo** option.
 
 ## Run locally
 
@@ -41,7 +61,7 @@ Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitl
 
 - Organize multiple skills inside projects, with a project directory and skill list.
 - Start a new skill from a natural-language prompt using the local Claude Code CLI, review its proposed contracts, and continue editing.
-- Edit step contracts and inner facets directly in Canvas, List, or Step-by-step views; insert and reorder steps with explicit inputs and outputs.
+- Edit step contracts and inside items directly in Canvas, List, or Step-by-step views; insert and reorder steps with explicit inputs and outputs.
 - Resolve a local rule override by using the shared value, updating the shared rule after reviewing its uses, or creating a separate rule.
 - Define inner functions, decisions, tool contracts, exceptions, shared rules, and references.
 - Specify input fields, output columns, presentation rules, and illustrative screen data.
@@ -53,13 +73,13 @@ Opening `studio/dist/skill-blueprint-studio.html` directly provides an explicitl
 - Resolve structural conflicts and export `SKILL.md`, Markdown references, and retained assets.
 - Save and reopen an editable project backup.
 
-**Explore the demo** opens an optional example project. Its skill intentionally contains one conflicting shared-rule override. Open **Review & export** to inspect it, then remove the override from **Read source data** to use the shared value.
+**Explore the demo** opens an optional example project. Its skill intentionally contains one conflicting shared-rule override. Open **Review & package** to inspect it, then remove the override from **Read source data** to use the shared value.
 
 ## Saving and backups
 
 Projects and skills autosave to the local SQLite database through the server. **Saved to local database** appears after the server acknowledges a committed write. **Saving**, **Changes not saved**, and **Save conflict** distinguish pending or failed writes. Text edits are grouped into saves; avoid closing while a save is pending.
 
-**Back up project** downloads every skill in the selected project as a `.blueprint.json` file. **Back up projects** on the directory downloads the whole workspace. **Back up this skill** in Review & export keeps the individual `.agentic.json` format. Backups include the current working copy, so unsaved changes can be preserved after a connection failure or conflict.
+**Back up project** downloads every skill in the selected project as a `.blueprint.json` file. **Back up projects** on the directory downloads the whole workspace. **Back up this skill** in Review & package keeps the individual `.agentic.json` format. Backups include the current working copy, so unsaved changes can be preserved after a connection failure or conflict.
 
 **Restore project** accepts a project, workspace, or older single-skill backup and adds recovered projects without overwriting existing ones. **Restore a skill backup** adds an individual backup to the current project. When earlier browser data exists, **Review browser data** lets you inspect and copy it into the database. It is never imported automatically, and its original browser copy is retained. The old version may have saved an untouched demo; copying it is optional.
 
@@ -97,7 +117,7 @@ Projects are stored in a local database. This release is a local single-workspac
 
 ## Code and license
 
-The application UI, workflow model, compiler, ZIP handling, analyzer, review gate, database, drafting and optimization adapters, server, and build tooling were authored for this project. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation and optimization invoke a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
+The application UI, workflow model, SVG flowchart and gesture controls, contextual help, compiler, ZIP handling, analyzer, review gate, database, drafting and optimization adapters, server, and build tooling were authored for this project. An external Claude Design assessment and published UX guidance informed the redesign; its prototype code and support files are not included. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation and optimization invoke a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
 
 The application is licensed under [MIT](LICENSE). See [the provenance and runtime inventory](studio/THIRD_PARTY_APPLICATION.md). Runtime binaries are not distributed with this repository.
 

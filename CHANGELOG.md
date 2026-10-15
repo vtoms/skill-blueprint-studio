@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0 — 2026-10-15
+
+- Reorganize skill editing into Brief, Steps, Rules & files, Input & output, Review & package, Test in Claude, and Improve; keep every section directly accessible.
+- Add an inline autosaving brief, factual chapter status, mobile section picker, contextual info overlays and persistent errors.
+- Give Step by step, List and Canvas distinct jobs; add attention filtering and accessible inspector tabs and hints.
+- Replace the card grid with a spatial SVG flowchart: movable shapes, labelled connectors, insertion, pan/zoom/fit/focus, automatic arrangement, text outline and keyboard/click/tap controls.
+- Store diagram coordinates in SQLite and backups without changing execution order, semantic revision, independent review evidence or test freshness.
+- Keep run-order changes explicit and retain changed-input review. Reset layout for improved versions with fresh step identities while preserving the frozen source layout.
+- Move improvement controls and draft decisions into their relevant sections; clarify package checks, external testing and version resets.
+- Preserve all import, source, export, optimization and database gates. Add layout, review-integrity and honest-status regression coverage.
+- Document researched UX decisions and provenance. No runtime package or copied prototype component was added.
+
 ## 0.6.0 — 2026-10-15
 
 - Add AI optimization after import and in the workflow editor through the existing optional Claude Code CLI.

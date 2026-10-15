@@ -56,3 +56,9 @@ The last five previous states can be inspected in `workspace_history` with SQLit
 ## Optimization versions
 
 Each kept optimization is a separate skill in its project, with a frozen baseline and proposal. Working databases and project/workspace backups contain these records and retained source assets; Git contains no working versions. Baselines exclude prior optimization/reviewer history to avoid recursive growth, but complete original source bytes remain preserved. SHA-256 checks validate baseline integrity on database API reads/writes and browser restore. Snapshots increase backup size; existing size limits still apply. See [AI optimization](OPTIMIZATION.md).
+
+## Diagram arrangement
+
+An optional skill `diagram` object stores layout schema version 1 and step positions by stable step identity. Coordinates are finite, bounded, and validated on backup/database parsing. Inserting a step allocates a free position; deleting it removes its position. Older skills without layout metadata use automatic arrangement without a database migration.
+
+Layout changes save through the same SQLite revision/conflict controls and appear in project/workspace backups. They do not increment the skill's instruction revision, alter run order, invalidate independent review evidence, or make recorded results stale. A new AI-improved version gets fresh step identities and automatic layout; its frozen baseline retains the source arrangement. Viewport pan and zoom are temporary presentation state. The database schema and empty template remain unchanged.

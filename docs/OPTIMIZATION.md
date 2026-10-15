@@ -2,17 +2,17 @@
 
 ## Use the feature
 
-After importing a skill, choose **Add & optimize a copy**. This saves the imported source and opens the optimization options before you review its individual steps. You can also choose **Create optimized version** from any skill's workflow editor.
+After importing a skill, choose **Add & improve a copy**. This saves the imported source and opens the optimization options before you review its individual steps. You can also choose **Improve → Create improved version** from any skill.
 
 1. Optionally describe what should improve, such as clearer handoffs or less duplication.
 2. Leave **Allow AI to reorder, combine or split steps when needed** enabled to propose a new sequence. Disable it to preserve the exact step count and order while clarifying instructions.
-3. Choose **Generate optimized version**. The local Claude Code CLI produces a proposal using its signed-in account and configured model.
-4. Inspect the before/after comparison, source step numbers, proposed input/output contracts, facet instructions, rationale, handoff explanations, assumptions and open questions. **Adjust optimization** returns to your options without changing the source.
-5. Choose **Keep version & open editor** to add a separate skill to the same project. **Cancel** discards the pending proposal.
-6. Use **Resolve optimization setup** to answer questions and review assumptions. Answers become shared definitions in the exported instructions. Apply any necessary corrections and confirm each proposed step separately.
+3. Choose **Generate proposal**. The local Claude Code CLI produces a proposal using its signed-in account and configured model.
+4. Inspect the before/after comparison, source step numbers, proposed input/output contracts, inside instructions, rationale, handoff explanations, assumptions and open questions. **Change request** returns to your options without changing the source.
+5. Choose **Keep as new version & open** to add a separate skill to the same project. **Cancel** discards the pending proposal.
+6. Use **Resolve questions & assumptions** to answer questions and review assumptions. Answers become shared values in the exported instructions. Apply any necessary corrections and confirm each proposed step separately.
 7. Review retained resource specifications and import notes. Imported versions require a fresh independent adversarial review. Run actual scenarios in Claude and record the observed results separately.
 
-The optimized draft is clearly labelled in the skill directory. The source remains a separate editable skill. The new version additionally keeps a frozen baseline from the moment optimization began, so editing the source later does not change the historical comparison. **Compare optimization** reopens the proposal as generated; subsequent editor changes are not silently substituted into that view. **Download baseline snapshot** creates a restorable single-skill backup of the baseline. **Open source skill** opens the current source entry when it is available.
+The optimized draft is clearly labelled in the skill directory. The source remains a separate editable skill. The new version additionally keeps a frozen baseline from the moment optimization began, so editing the source later does not change the historical comparison. **View comparison** reopens the proposal as generated; subsequent editor changes are not silently substituted into that view. **Download baseline snapshot** creates a restorable single-skill backup of the baseline. **Open original skill** opens the current source entry when it is available.
 
 ## Scope and preservation
 
@@ -21,14 +21,14 @@ The model can propose overall working instructions and the titles, kinds, jobs, 
 The application, rather than the model, copies these values from the source:
 
 - Skill description, purpose, overall input, final outcome, export name and additional metadata.
-- Shared definitions and their bindings; facet types, local overrides, tool connections and tool operations.
+- Shared values and their bindings; facet types, local overrides, tool connections and tool operations.
 - Markdown reference files and resource specifications, including unresolved translation gaps.
 - Complete original source bytes, retained assets and applicable license metadata.
 - Input/output screens, presentation rules, example screen data, acceptance scenarios and expected results.
 
 Each original step must be mapped to at least one proposed step. Every original facet must occur exactly once, within a step mapped to its original owner. Each proposed step receives the union of its mapped source steps' reference and resource bindings. Unknown identities, omissions, duplicate facets and invalid ownership reject the whole proposal. With resequencing disabled, step count, index and ownership must match exactly. These checks establish structural coverage, not semantic equivalence or correct resource execution order.
 
-No review pass or successful test result transfers to a derived version. Steps, resources and import notes require confirmation again; scenarios start **Not tested**, without prior observations. Original prompt setup questions remain available and gated. Existing input-change questions and unresolved earlier optimization decisions carry forward into setup review. The optimizer cannot silently resolve them.
+No review pass or successful test result transfers to a derived version. Steps, resources and import notes require confirmation again; scenarios start **Not run yet**, without prior observations. Original prompt setup questions remain available and gated. Existing input-change questions and unresolved earlier optimization decisions carry forward into setup review. The optimizer cannot silently resolve them.
 
 Reference text and resource specifications are preserved unchanged in this release. Improve those through their existing editors when needed. AI optimization does not execute the workflow, call its tools, test generated implementations or establish equivalent behavior. A shorter workflow is not automatically a better workflow.
 
@@ -51,3 +51,5 @@ Derived versions retain the source identity, revision and digest, a baseline dig
 Shape validation rejects invalid or nested optimization records on backup parsing. Native SHA-256 verification additionally checks baseline integrity on database API reads/writes, browser load and restore, optimization requests, proposal acceptance, review-packet creation, report recording and UI export. Imported provenance in the baseline continues to require independent review even if a restored record has inconsistent top-level flags.
 
 Independent review evidence includes the original source, immediate baseline, proposal, mapping, setup resolutions and current working draft. A changed record invalidates its earlier review. Hashes detect mismatches; they are not authenticated signatures. Local database files and backups remain editable, and reviewer identity is declared rather than authenticated.
+
+Open **Improve** to create another version or revisit its frozen comparison and questions. Confirm steps in **Steps**, complete **Review & package**, then use **Test in Claude** to record actual external results. A source diagram stays in the baseline; fresh proposal step identities receive their own automatic arrangement.
