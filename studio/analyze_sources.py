@@ -13,7 +13,48 @@ import zipfile
 from html.parser import HTMLParser
 
 
+MAX_SOURCE_BYTES = 8 * 1024 * 1024
+MAX_WORKBOOK_ENTRIES = 500
+MAX_WORKBOOK_EXPANDED_BYTES = 32 * 1024 * 1024
+MAX_XML_BYTES = 4 * 1024 * 1024
+MAX_XML_ELEMENTS = 100000
+MAX_XML_DEPTH = 128
 
+
+def bounded_xml(data):
+    if len(data) > MAX_XML_BYTES:
+        raise ValueError('XML part exceeds the 4 MB analysis limit; describe it manually.')
+    declarations = data.replace(b'\x00', b'').upper()
+    if b'<!DOCTYPE' in declarations or b'<!ENTITY' in declarations:
+        raise ValueError('XML declarations and entities are not accepted for analysis.')
+    parser = ET.XMLPullParser(events=('start', 'end'))
+    root = None
+    count = depth = 0
+    for offset in range(0, len(data), 4096):
+        parser.feed(data[offset:offset + 4096])
+        for event, element in parser.read_events():
+            if event == 'start':
+                if root is None:
+                    root = element
+                count += 1
+                depth += 1
+                if count > MAX_XML_ELEMENTS or depth > MAX_XML_DEPTH:
+                    raise ValueError('XML structure exceeds the analysis element/depth limits.')
+            else:
+                depth -= 1
+    parser.close()
+    if root is None:
+        raise ValueError('XML input has no root element.')
+    return root
+
+
+def workbook_xml(archive, name):
+    info = archive.getinfo(name)
+    if info.file_size > MAX_XML_BYTES:
+        raise ValueError('Workbook XML part exceeds the 4 MB analysis limit; describe it manually.')
+    with archive.open(info) as source:
+        data = source.read(MAX_XML_BYTES + 1)
+    return bounded_xml(data)
 
 
 class English:
@@ -161,18 +202,26 @@ def structure_contract(path, data):
     lines = ['Preserve the original file bytes at ' + path + '. Interpret its structure without changing the source asset.']
     if suffix == '.xlsx':
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            workbook = ET.fromstring(archive.read('xl/workbook.xml'))
+            entries = archive.infolist()
+            names = [entry.filename for entry in entries]
+            if len(entries) > MAX_WORKBOOK_ENTRIES or len(set(names)) != len(names):
+                raise ValueError('Workbook has too many or duplicate archive entries.')
+            if sum(entry.file_size for entry in entries) > MAX_WORKBOOK_EXPANDED_BYTES:
+                raise ValueError('Workbook expanded contents exceed the 32 MB analysis limit.')
+            if any(entry.flag_bits & 1 for entry in entries):
+                raise ValueError('Encrypted workbook entries are not supported.')
+            workbook = workbook_xml(archive, 'xl/workbook.xml')
             ns = {'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
             sheets = [dict(e.attrib) for e in workbook.findall('s:sheets/s:sheet', ns)]
             lines += ['Format: Excel workbook.', 'Sheets in order: ' + json.dumps(sheets, ensure_ascii=False) + '.']
             for name in archive.namelist():
                 if name.startswith('xl/worksheets/') and name.endswith('.xml'):
-                    sheet = ET.fromstring(archive.read(name))
+                    sheet = workbook_xml(archive, name)
                     cells = sheet.findall('.//s:c', ns)
                     lines += [name + ': ' + str(len(cells)) + ' stored cells; ' + str(sum(c.find('s:f',ns) is not None for c in cells)) + ' formulas. First-row cell positions and types: ' + json.dumps([dict(c.attrib) for c in cells if c.attrib.get('r','').rstrip('0123456789') + '1' == c.attrib.get('r')], ensure_ascii=False) + '.']
             lines.append('Retain cell types, sheet order, relationships, formulas, named ranges, formatting and original workbook bytes. This inventory is not a recalculation or a business interpretation. Review field meanings before approving use.')
     elif suffix in ('.xml', '.xsd'):
-        root = ET.fromstring(text)
+        root = bounded_xml(data)
         local = lambda tag: tag.rsplit('}', 1)[-1]
         lines += ['Format: ' + ('XML Schema' if suffix == '.xsd' else 'XML template') + '.', 'Root element: ' + root.tag + '.', 'Root attributes: ' + json.dumps(root.attrib, ensure_ascii=False) + '.', 'Total element count: ' + str(sum(1 for _ in root.iter())) + '.']
         children = [{'name':local(child.tag),'attributes':dict(child.attrib)} for child in root]
@@ -188,8 +237,10 @@ def structure_contract(path, data):
             return type(item).__name__
         lines += ['Format: JSON.', 'Observed field structure (sampled values are not a validation schema): ' + json.dumps(shape(value), ensure_ascii=False) + '.', 'Preserve field names, nesting, arrays, number representations, nulls and original bytes. Confirm required fields, types, units and permitted values with the business owner; observed values alone do not define those constraints.']
     elif suffix in ('.csv', '.tsv'):
-        rows = list(csv.reader(io.StringIO(text), delimiter='\t' if suffix == '.tsv' else ','))
-        lines += ['Format: delimited table.', 'Column order: ' + json.dumps(rows[0] if rows else [], ensure_ascii=False) + '.', 'Data rows: ' + str(max(0, len(rows)-1)) + '.', 'Preserve column order, quoting, empty values, and the original file. Define column types from reviewed business requirements rather than guessing from a few rows.']
+        rows = csv.reader(io.StringIO(text), delimiter='\t' if suffix == '.tsv' else ',')
+        columns = next(rows, [])
+        row_count = sum(1 for _ in rows)
+        lines += ['Format: delimited table.', 'Column order: ' + json.dumps(columns, ensure_ascii=False) + '.', 'Data rows: ' + str(row_count) + '.', 'Preserve column order, quoting, empty values, and the original file. Define column types from reviewed business requirements rather than guessing from a few rows.']
     else:
         lines.append('Review the asset’s format, fields, units, ordering, required values, and constraints before using it. The original file remains authoritative.')
     return {'kind':'retain','structure':'\n\n'.join(lines),'untranslated':[]}
@@ -210,6 +261,8 @@ class HTMLInventory(HTMLParser):
 
 
 def analyze_entry(path, data):
+    if len(data) > MAX_SOURCE_BYTES:
+        raise ValueError('Source file exceeds the 8 MB analysis limit.')
     suffix = Path(path).suffix.lower()
     if suffix == '.py': entry = python_contract(path, data.decode('utf-8-sig'))
     elif suffix in ('.html', '.htm'):
@@ -242,7 +295,7 @@ def attach_dependencies(entries, sources):
                         found = next((p for p in alternatives if p in paths and p != path), None)
                         if found: dependencies.add(found); break
         elif path.endswith('.xsd') and not entry.get('error'):
-            tree = ET.fromstring(sources[path])
+            tree = bounded_xml(sources[path])
             for node in tree.iter():
                 location = node.attrib.get('schemaLocation')
                 if location and '://' not in location:

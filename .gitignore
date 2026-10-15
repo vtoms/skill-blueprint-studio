@@ -13,3 +13,6 @@ studio/dist/*.zip
 *.sqlite-wal
 *.sqlite-shm
 !studio/seed/workspace.sqlite
+
+test-results/
+playwright-report/

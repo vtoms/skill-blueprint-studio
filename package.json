@@ -1,6 +1,6 @@
 {
   "name": "skill-blueprint-studio",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -11,9 +11,14 @@
   "scripts": {
     "start": "node studio/serve.mjs",
     "build": "node studio/build.mjs",
-    "test": "node --test studio/core.test.mjs studio/independent-review.test.mjs studio/workspace.test.mjs studio/workflow-order.test.mjs studio/workspace-database.test.mjs studio/persistence.test.mjs studio/serve.test.mjs studio/skill-draft.test.mjs studio/claude-drafting.test.mjs studio/skill-optimization.test.mjs studio/optimization-request.test.mjs studio/build.test.mjs studio/diagram-layout.test.mjs studio/ux-content.test.mjs",
+    "test": "node --test studio/*.test.mjs",
     "test:analyzer": "python -m unittest discover -s studio -p analyze_sources_test.py",
     "db:template": "node studio/make-database-template.mjs",
-    "examples": "node studio/make-examples.mjs"
+    "examples": "node studio/make-examples.mjs",
+    "test:browser": "node --test --test-concurrency=1 tests/browser/*.test.mjs",
+    "test:all": "npm run build && npm test && npm run test:analyzer && npm run test:browser"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
   }
 }

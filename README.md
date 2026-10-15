@@ -103,13 +103,22 @@ See [the internal review rule](studio/INDEPENDENT_REVIEW_RULE.md). This prototyp
 
 ## Tests and build
 
+Application startup and builds use Node/Python standard libraries and need no package installation. To run the complete development checks:
+
 ```sh
-npm test
-python studio/analyze_sources_test.py
+npm ci --ignore-scripts
+npx playwright install chromium
 npm run build
+npm test
+npm run test:analyzer
+npm run test:browser
 ```
 
-On systems where the interpreter is named `python3`, use it for the Python test command. Tests use small, self-authored inputs. No imported skill distribution or external fixture is required.
+Playwright and its pinned Chromium are development tools only. On Linux, `npx playwright install --with-deps chromium` also installs required browser system libraries. Set `STUDIO_PYTHON` if Python is not on PATH. `npm run test:all` runs build, Node, Python and browser checks after the tools are installed.
+
+The browser tests are published in `tests/browser/`. Each uses a separate temporary SQLite workspace and disables real provider execution. They cover projects, prompt/import flows, editing and export, diagram interaction, help, themes, independent-review gates, optimization versions and save conflicts. Screenshots go to ignored `test-results/browser/`. An optional `STUDIO_BROWSER_EXECUTABLE` selects an existing browser for local development; CI uses the pinned Chromium.
+
+GitHub Actions runs Node/Python checks on Windows and Linux, and browser journeys on Linux, for pushes and pull requests to `main`. It also verifies the committed build and empty database template. Tests use self-authored generic inputs; no private skill, working database, credentials or Claude account is needed. See [hardening and validation](docs/HARDENING.md) for limits and the module map.
 
 `npm run examples` produces a generic example ZIP and editable project in `studio/dist/`. Example exports pass structural validation; they do not assert successful model execution.
 
@@ -121,9 +130,11 @@ Imports propose steps from Markdown headings. Source analysis drafts behavior co
 
 Projects are stored in a local database. This release is a local single-workspace application; it does not provide accounts, cloud sync, collaborative merging, or shared storage between separate servers. Reload to see another browser's saved changes. Archive input is limited to 120 entries, 2 MB per file, and 8 MB total. Individual skill backups are limited to 32 MB, project backups to 64 MB, and workspace backups to 128 MB.
 
+Source analysis processes one request at a time: up to 120 files, 8 MB of decoded input and a 12 MB JSON upload. Workbook contents are capped at 500 internal entries and 32 MB expanded, with 4 MB per XML part. Requests that exceed limits leave original files available for manual specification. See [the full limits](docs/HARDENING.md).
+
 ## Code and license
 
-The application UI, workflow model, SVG flowchart and gesture controls, contextual help, compiler, ZIP handling, analyzer, review gate, database, drafting and optimization adapters, server, and build tooling were authored for this project. An external Claude Design assessment and published UX guidance informed the redesign; its prototype code and support files are not included. There are no npm/pip application dependencies or vendored UI components. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation and optimization invoke a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
+The application UI, workflow model, SVG flowchart and gesture controls, contextual help, compiler, ZIP handling, analyzer, review gate, database, drafting and optimization adapters, server, and build tooling were authored for this project. An external Claude Design assessment and published UX guidance informed the redesign; its prototype code and support files are not included. There are no npm/pip application runtime dependencies or vendored UI components. Playwright is a development-only dependency under Apache-2.0; see the inventory below. Node provides the SQLite engine; SQLite's deliverable code is public domain. Prompt generation and optimization invoke a separately installed Claude Code CLI, governed by Anthropic's terms; its executable code is not distributed here. The browser, Node.js, and Python provide the other platform APIs.
 
 The application is licensed under [MIT](LICENSE). See [the provenance and runtime inventory](studio/THIRD_PARTY_APPLICATION.md). Runtime binaries are not distributed with this repository.
 

@@ -17,7 +17,7 @@ Claude Design, using Opus 5.5, provided an external assessment of the complete p
 | System fonts | Segoe UI, Arial, and sans-serif fallback | Referenced from the host; no font binaries are shipped |
 | Claude Code native CLI, optional | Generate a proposed skill or separate optimized version through an existing signed-in account | External proprietary runtime, [all rights reserved and subject to Anthropic's Commercial Terms](https://github.com/anthropics/claude-code/blob/main/LICENSE.md). Installed separately; no CLI source or binary is copied or vendored. The application's MIT license does not license Claude Code or provider access. |
 
-There are no npm or pip dependencies. The standalone HTML loads no CDN script, remote font, or external component library. If distributing runtime binaries separately, retain each exact runtime's complete license and third-party notices.
+There are no npm or pip application runtime dependencies. Development browser tests use the locked packages listed below. The standalone HTML loads no CDN script, remote font, or external component library. If distributing runtime binaries separately, retain each exact runtime's complete license and third-party notices.
 
 Supported runtime baseline: Node.js 24.15 or later and Python 3.12 or later. Validation for this release used Node.js 24.19.0. The Python analyzer is optional for authoring, but is required for automatic source analysis and the complete test suite.
 
@@ -28,3 +28,14 @@ The optimization model, version metadata validation, comparison UI, preservation
 The 0.7.0 journey, copy/help map, SVG connectors, layout geometry, pointer/pinch/keyboard controls, text outline and help overlay were implemented in project code under MIT. They use browser DOM/SVG/Popover APIs and existing project modules. No React Flow, diagramming framework, external icon/font package, Design prototype component or support script was added. Research links in [the UX guide](../docs/UX.md) are references, not runtime dependencies. External design services and separately installed development browsers are not licensed or distributed by this repository.
 
 The light/dark appearance controller, semantic color tokens and sun/moon SVGs were authored for this project under MIT. They use browser CSS custom properties, `prefers-color-scheme`, `matchMedia` and native color-scheme support. Preference persistence reuses the existing SQLite workspace. No theme library, icon package, runtime dependency or external stylesheet was added.
+
+## Development-only dependencies
+
+| Component | Version | Use and license |
+|---|---|---|
+| `playwright` | 1.64.1 | Portable browser test automation; [Apache-2.0](https://github.com/microsoft/playwright/blob/v1.64.1/LICENSE) |
+| `playwright-core` | 1.64.1 | Transitive browser automation implementation; Apache-2.0, with its packaged third-party notices |
+| Downloaded Chromium / Chrome for Testing and browser support tools | Pinned by Playwright | External development runtimes downloaded by the test installer; their upstream licenses and notices apply. No browser binary is distributed in this repository. |
+| GitHub Actions maintained by `actions` | Commit-pinned in `ci.yml` | External CI tooling for checkout, Node/Python setup and failure artifacts, under each action's upstream license. Their implementation is not copied into the application. |
+
+`package-lock.json` records exact dependency versions, integrity hashes and licenses. Package licenses/notices remain in installed packages. The application and generated standalone HTML do not import Playwright, load it from a CDN or need it to run. The authored tests and hardening/refactoring code are MIT application-project source. Adding this test tooling does not change the application license or vendor external code into the application.

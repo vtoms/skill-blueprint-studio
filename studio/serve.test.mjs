@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
+import {request as httpRequest} from 'node:http';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -48,8 +49,15 @@ test('local server serves the app, persists projects, rejects stale writes, and 
   const response=await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(entries)});
   assert.equal(response.status,200);const analysis=await response.json();
   assert.match(JSON.stringify(analysis),/add/);
-  assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{Origin:'https://example.com'},body:'[]'})).status,400);
+  assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{Origin:'https://example.com'},body:'[]'})).status,403);
   assert.equal((await fetch(base+'/api/analyze',{method:'POST',body:'[null]'})).status,400);
+  assert.equal((await fetch(base+'/api/analyze')).status,405);
+  for(const headers of [{Host:'example.invalid:'+port},{'Sec-Fetch-Site':'cross-site'},{Origin:'https://example.com'}]){
+   for(const endpoint of ['/api/workspace','/api/skill-draft','/api/skill-optimize','/api/analyze']){const status=await new Promise((resolve,reject)=>{const req=httpRequest(base+endpoint,{method:'POST',headers:{'Content-Type':'application/json',...headers}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.on('error',reject);req.end('[]');});assert.equal(status,403,endpoint);}
+  }
+  assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'text/plain'},body:'[]'})).status,400);
+  assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:'{invalid'})).status,400);
+  assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify([{path:'../bad.py',data:'YQ=='}])})).status,400);
   assert.equal((await fetch(base+'/%2e%2e%2fREADME.md')).status,403);
  }finally{
   if(server.exitCode===null){server.kill();await once(server,'exit');}

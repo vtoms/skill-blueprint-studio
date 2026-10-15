@@ -1,6 +1,6 @@
 # Contributing
 
-Use Node.js 24.15 or later and Python 3.12 or later. The application has no npm or pip package dependencies.
+Use Node.js 24.15 or later and Python 3.12 or later. The application has no npm or pip runtime package dependencies. Browser testing uses the development-only Playwright dependency locked in `package-lock.json`.
 
 ## Build and run
 
@@ -31,3 +31,7 @@ Optimization changes must preserve the separate source version, baseline digest 
 For UI changes, preserve the seven-section journey and the distinct purposes of the three step views. Put optional explanations behind the shared text-only info layer; keep blocking issues, save failures, mandatory review and provider transmission visible. Preserve labelled inputs, described hints, keyboard-operable tabs, focus return, mobile width and alternatives to drag/pan gestures. Test actual application interactions in an isolated database when changing these behaviors.
 
 Diagram coordinates are presentation metadata: changing arrangement must not change instruction revision, predecessor identity, review evidence or test freshness. Run-order changes use the shared input-review logic. New optimization identities must not reuse baseline coordinates. Check restoration, insertion/deletion, cancellation and source/review integrity. See [UX decisions](docs/UX.md). Do not copy external assessment/prototype assets into the public application without provenance and license review.
+
+For browser development, run `npm ci --ignore-scripts`, `npx playwright install chromium`, then `npm run test:browser`. Linux may need `npx playwright install --with-deps chromium`. The tests create and remove isolated temporary databases, use generic authored fixtures and disable actual Claude execution. Never point them at a working workspace. Failure screenshots are ignored by Git. The CI workflow runs unit checks on Windows/Linux and browser checks on Linux, with only read access to repository contents.
+
+Maintain the compatibility exports in `studio/core.mjs`; implementation owners are described in [HARDENING.md](docs/HARDENING.md). Archive file maps must preserve special object keys as ordinary filenames. Never silently normalize, omit or overwrite imported source entries. Keep request guards shared across every API, and test malformed input, analysis slot release/cancellation, archive integrity and expansion limits before changing those boundaries.

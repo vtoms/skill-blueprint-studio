@@ -4,11 +4,39 @@ import json
 import sys
 import unittest
 import zipfile
+from unittest.mock import patch
 sys.dont_write_bytecode = True
-from analyze_sources import analyze_entry, attach_dependencies, python_contract, structure_contract
+from analyze_sources import analyze_entry, attach_dependencies, python_contract, structure_contract, bounded_xml
 
 
 class SourceAnalysisTests(unittest.TestCase):
+    def test_workbook_limits_reject_before_expanding_parts(self):
+        content = io.BytesIO()
+        with zipfile.ZipFile(content, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('xl/workbook.xml', '<workbook/>')
+            archive.writestr('xl/worksheets/sheet1.xml', '<worksheet>' + ' ' * 1024 + '</worksheet>')
+        with patch('analyze_sources.MAX_WORKBOOK_EXPANDED_BYTES', 500):
+            with self.assertRaisesRegex(ValueError, 'expanded'):
+                structure_contract('assets/example.xlsx', content.getvalue())
+        with patch('analyze_sources.MAX_XML_BYTES', 500):
+            with self.assertRaisesRegex(ValueError, 'XML part'):
+                structure_contract('assets/example.xlsx', content.getvalue())
+        with patch('analyze_sources.MAX_WORKBOOK_ENTRIES', 1):
+            with self.assertRaisesRegex(ValueError, 'entries'):
+                structure_contract('assets/example.xlsx', content.getvalue())
+
+    def test_xml_declarations_depth_and_element_limits_are_bounded(self):
+        for data in [b'<!DOCTYPE x [<!ENTITY a "value">]><x>&a;</x>', '<!DOCTYPE x><x/>'.encode('utf-16')]:
+            with self.assertRaisesRegex(ValueError, 'declarations'):
+                bounded_xml(data)
+        with patch('analyze_sources.MAX_XML_DEPTH', 3):
+            with self.assertRaisesRegex(ValueError, 'limits'):
+                bounded_xml(b'<a><b><c><d/></c></b></a>')
+        with patch('analyze_sources.MAX_XML_ELEMENTS', 3):
+            with self.assertRaisesRegex(ValueError, 'limits'):
+                bounded_xml(b'<a><b/><c/><d/></a>')
+        self.assertEqual(bounded_xml(b'<a><b/></a>').tag, 'a')
+
     def test_parsing_never_executes_module_actions(self):
         contract = analyze_entry('scripts/danger.py', b'raise RuntimeError("must not execute")\n')
         self.assertIn('Raise', contract['behavior'])

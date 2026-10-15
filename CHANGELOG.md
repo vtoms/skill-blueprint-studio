@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — 2026-10-15
+
+- Preserve special object-key filenames through ZIP reading, source import, compiler output and downloads; reject inconsistent, overlapping and malformed archive metadata.
+- Add adversarial path/Unicode/percent-link and archive integrity regression coverage.
+- Apply shared local-request and JSON guards to every API, including source analysis; bound uploads, decoded files, analysis concurrency, cancellation, worker time and output.
+- Limit nested workbook entry counts, expanded sizes and XML part bytes/depth/elements; reject XML declarations and stream CSV row counting.
+- Extract model, paths, validation, compiler, import and backup reading behind the stable core exports; separate HTTP/analysis services and resource/screen views.
+- Fix inspector keyboard focus timing for rapid tab navigation.
+- Publish portable browser journeys with isolated databases, generic fixtures and mocked provider output. Add locked development-only Playwright tooling.
+- Add commit-pinned CI on Windows/Linux, browser checks on Linux and reproducible build/template validation. Update documentation, limits and dependency provenance.
+
 ## 0.8.0 — 2026-10-15
 
 - Add an accessible sun/moon Light/Dark header switch with system appearance as the initial default.
