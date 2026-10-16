@@ -7,6 +7,7 @@
 - Share original-file restore actions across Rules & files and the package source dialog. Reset an emptied supporting-file category after removal when other files remain.
 - Preserve standalone imported Markdown bytes and provenance, including BOM/CRLF, edited/renamed references and repeated filenames. Require independent review for active imported references and inherited baselines; retain unused source history without relabeling an authored skill as imported.
 - Show state-specific package guidance and preparation progress; reconcile inside-item counts and singular chapter counts. Remove dead dialog branches and an unused helper.
+- Distinguish active source versions from occupied paths, show accurate legacy source sizes, retain mobile Back controls and scroll clearance for notices, and avoid insertion buttons over shapes. Clarify source associations during improvement.
 - Add geometry, reference lifecycle, review and touch/mobile regressions. No runtime dependency, SQLite schema/template, MIT license or review-policy version change.
 
 ## 0.10.0 — 2026-10-16

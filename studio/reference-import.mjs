@@ -13,6 +13,7 @@ export function importReferenceSources(skill,files){
   paths.add(path);
   let sourcePath=path;
   if(originalPaths.has(sourcePath))sourcePath='reference-imports/'+uid()+'/'+file.name;
+  if(!safePath(sourcePath))throw new Error('The source history path is too long. Shorten the incoming filename before importing it again.');
   originalPaths.add(sourcePath);
   const original={...preserveSource(sourcePath,file.bytes),referencePath:path};
   return {original,reference:{id:uid(),path,content:original.content,sourcePath}};

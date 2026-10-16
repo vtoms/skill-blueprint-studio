@@ -44,5 +44,6 @@ export function diagramHandoff(edge,obstacles){
  const candidates=[{x:point.x-width/2,y:point.y+20},{x:point.x-width/2,y:point.y-height-20},{x:point.x+22,y:point.y-height/2},{x:point.x-width-22,y:point.y-height/2}];
  const label=candidates.find(rect=>rect.x>=0&&rect.y>=0&&!obstacles.some(node=>rect.x<node.x+node.width+4&&rect.x+width+4>node.x&&rect.y<node.y+node.height+4&&rect.y+height+4>node.y));
  // A custom layout can leave no room. The node/editor still show the contract.
- return {...point,label:label?{x:label.x-point.x,y:label.y-point.y,width}:null};
+ const insertVisible=!obstacles.some(node=>point.x-15<node.x+node.width+4&&point.x+19>node.x&&point.y-15<node.y+node.height+4&&point.y+19>node.y);
+ return {...point,insertVisible,label:label?{x:label.x-point.x,y:label.y-point.y,width}:null};
 }
