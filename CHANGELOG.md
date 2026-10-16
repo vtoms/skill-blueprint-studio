@@ -7,6 +7,7 @@
 - Remove/restore active supporting files with dependency/step impact, undo, unchanged source originals and fresh review requirements. Open a populated file category and include attached files in inside-step counts.
 - Inventory Python definitions inside conditions, loops, exception blocks, context managers and match cases, preserving source-line/condition context. Humanize unsupported syntax gaps. Permit prose identifiers such as an inline bare tag while continuing to reject HTML/Python source.
 - Add a Projects continuation shortcut, Canvas step jump/full-scale focus, semantic zoom, collision-free start/finish boundaries, mobile overview/editor switching, compact navigation, larger reorder targets and pointer-transparent notifications. Consolidate duplicate actions and retain both themes/accessibility controls.
+- Focus a newly inserted step synchronously so a delayed browser frame cannot steal focus from a field the consultant has already started editing. Add a delayed-frame regression.
 - Coalesce workflow redraws, reuse validation results and defer serialization to save/flush while retaining conflict/retry/in-flight snapshot protection. Fix the preview default helper and add a local source-to-dist freshness test.
 - Update assessment, acceptance limits, storage, review, UX and license/dependency inventory. No runtime dependency, SQLite schema/template, MIT license or review-policy version change.
 

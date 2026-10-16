@@ -1365,8 +1365,8 @@ function updateWorkflowChrome(){
 }
 function insertWorkflowStep(index){
  if(project.steps.length>=100){notify('This skill supports up to 100 steps.',true);return;}
- mutate(()=>{const added=newStep('');project.steps.splice(index,0,added);selected=added.id;tab='definition';},'Define this step’s instructions and output.',{orderChange:true});
- requestAnimationFrame(()=>$('.inspector [data-key="title"]')?.focus());
+ mutate(()=>{const added=newStep('');project.steps.splice(index,0,added);selected=added.id;tab='definition';mobileWorkflowPane='editor';},'Define this step’s instructions and output.',{orderChange:true});
+ $('.inspector [data-key="title"]')?.focus();
 }
 
 function renderReferences(){const output=rulesFilesMarkup(project,{tab:referenceTab,referenceId,button});if(output.body===null){renderResources();$('#content').insertAdjacentHTML('afterbegin',output.navigation);}else $('#content').innerHTML=output.navigation+output.body;}

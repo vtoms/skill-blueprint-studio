@@ -1,6 +1,6 @@
 # 0.10.0 assessment follow-up and test outcome
 
-Date: 2026-10-16. Assessed baseline: `4cc0c20` (0.9.2). Implementation: 0.10.0, [commit 1ba77ba](https://github.com/vtoms/skill-blueprint-studio/commit/1ba77ba0fbc551e830bb7848a5da410ec39e72c8).
+Date: 2026-10-16. Assessed baseline: `4cc0c20` (0.9.2). Initial implementation: 0.10.0, [commit 1ba77ba](https://github.com/vtoms/skill-blueprint-studio/commit/1ba77ba0fbc551e830bb7848a5da410ec39e72c8).
 
 The external Argon source and screenshot assessments were checked against source, isolated browser probes and analyzer controls before implementation. This report records the accepted changes and their validation. External recommendations were treated as claims to verify, rather than instructions to apply indiscriminately.
 
@@ -15,6 +15,7 @@ The external Argon source and screenshot assessments were checked against source
 | Repeated full redraws and serialization while typing | Coalesce stage/controller updates after 180 ms and reuse validation for that refresh. Serialize workspace data at the save debounce/flush, preserving fixed in-flight snapshots, queued edits, stale-write rejection and retry. Clear overlapping retry timers. | Browser 20-step typing probe limits stage replacement; persistence tests cover deferred serialization, edits during a pending write, failure, retry, conflict and recovery. No broad latency/memory improvement is claimed. |
 | Canvas/navigation clutter and difficult large/mobile navigation | Named step jump with full-scale focus, compact overview below 45% zoom, boundary collision avoidance, separate mobile overview/editor panes, larger reorder targets, sticky inspector actions, fewer duplicate controls and optional instructions behind the info layer. Both themes remain supported. | Geometry tests and desktop/mobile browser journeys cover selection, movement, keyboard/pointer/pinch controls, review/test freshness, search/jump, themes and viewport width. |
 | Empty initial file category and misleading inside count | Supporting files starts on a populated category; inside-step counts include bound references/resources and the file section states its count. | Browser data-file discovery and attachment test. |
+| A follow-up CI run exposed intermittent rapid-edit failure after adding a step | Reproduced a delayed animation-frame callback stealing focus back to the title. Focus the inserted step synchronously; subsequent edits keep their active field. Mobile Canvas insertion opens its editor before focusing. | Projects journey forces a delayed browser frame, checks active-field preservation and title contents, and waits for synchronized views before counting. |
 | Notifications could intercept interaction; repeated navigation/copy | Pointer-transparent corner notifications; Projects-first landing with Continue editing; duplicate Restore and Canvas order actions consolidated; singular/plural issue wording corrected. Essential errors remain persistent. | Browser interaction, Projects, mobile and appearance suites. |
 | Dangling preview fallback and locally stale standalone output risk | Use the existing screen default helper. Expose a pure build function, normalize line endings and fail local tests when committed standalone output differs from source. | Screen-preview journeys, module syntax check and source-to-artifact comparison; CI rebuild/diff remains enabled. |
 
@@ -32,13 +33,13 @@ The complete `npm run test:all` release run passed on Windows using Node.js 24.1
 | Browser journeys | **16 passed**, zero failed/skipped, using isolated temporary databases and synthetic provider fixtures |
 | Visual inspection | Reviewed generated light/dark desktop Canvas and dark mobile editor captures; mobile width/navigation and contrast controls are additionally exercised by the browser suite |
 | Live Claude Code adapter smoke | Claude Code 2.1.299 / `claude-opus-5-5`, one small self-authored generic review fixture. Returned all 10 topics, **changes required**, five findings, licensing unknown; no report automatically recorded. This is a successful adapter/negative-gate exercise, not a passing skill assessment. |
-| Hosted CI for implementation commit | **Passed**: Windows Node/Python, Linux Node/Python, Linux browser journeys and generated-artifact drift checks. [Run 38882767981](https://github.com/vtoms/skill-blueprint-studio/actions/runs/38882767981). |
+| Hosted CI for initial implementation commit | **Passed**: Windows Node/Python, Linux Node/Python, Linux browser journeys and generated-artifact drift checks. [Run 38882767981](https://github.com/vtoms/skill-blueprint-studio/actions/runs/38882767981). |
 | Module boundaries | Static scan of 48 non-test modules / 107 local import-re-export edges found no cycles. This is not a parser or runtime proof. |
 | Existing working database | Revision and logical payload digest unchanged by application testing; tests used separate data folders |
 
 The [CI workflow](../.github/workflows/ci.yml) repeats Node/Python checks on Windows and Linux, browser journeys on Linux, and committed-artifact drift checks for every push. Consult the workflow run for the release commit for hosted results. Live provider responses are intentionally excluded from automated CI.
 
-The regression run caught dialog routing, mobile view-state, in-flight save timer and stale test expectations during implementation; these were corrected before the passing release run. Earlier failed development runs are not counted as release passes.
+The regression run caught dialog routing, mobile view-state, in-flight save timer and stale test expectations during implementation. A later hosted run exposed an intermittent Projects failure: a deterministic delayed-frame probe reproduced focus theft after inserting a step. Synchronous focus and a regression were added before the final passing local run. Earlier failed development runs are not counted as release passes.
 
 ## Findings qualified or not adopted
 
