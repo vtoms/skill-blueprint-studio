@@ -20,7 +20,7 @@ npm run test:analyzer
 
 On systems that use `python3`, invoke `python3 -m unittest discover -s studio -p analyze_sources_test.py` and set `STUDIO_PYTHON=python3` for the Node server tests. On PowerShell, set `$env:STUDIO_PYTHON` to the desired executable. Test databases are created in isolated temporary directories; tests do not use the user's working database.
 
-The Node suite covers workflow compilation, source preservation, independent review, workspace backups, input-change review, the database template, durability, stale-write rejection, persistence failures, HTTP origin checks, blueprint validation, tool-free drafting arguments, and cancellation. Drafting tests use synthetic model responses and never consume a Claude account's usage. Analyzer tests inspect source as data; they do not execute imported programs.
+The Node suite covers workflow compilation, source preservation, independent review, workspace backups, input-change review, the database template, durability, stale-write rejection, persistence failures, HTTP origin checks, blueprint validation, tool-free drafting arguments, and cancellation. Drafting, optimization and guided-review tests use synthetic model responses and never consume a Claude account's usage. Analyzer tests inspect source as data; they do not execute imported programs.
 
 For schema changes, update the database version and provide a preserving migration. Regenerate the template with `npm run db:template` and verify that it contains only an empty workspace. Commit the template, its generator, tests, and storage documentation together.
 
@@ -35,3 +35,8 @@ Diagram coordinates are presentation metadata: changing arrangement must not cha
 For browser development, run `npm ci --ignore-scripts`, `npx playwright install chromium`, then `npm run test:browser`. Linux may need `npx playwright install --with-deps chromium`. The tests create and remove isolated temporary databases, use generic authored fixtures and disable actual Claude execution. Never point them at a working workspace. Failure screenshots are ignored by Git. The CI workflow runs unit checks on Windows/Linux and browser checks on Linux, with only read access to repository contents.
 
 Maintain the compatibility exports in `studio/core.mjs`; implementation owners are described in [HARDENING.md](docs/HARDENING.md). Archive file maps must preserve special object keys as ordinary filenames. Never silently normalize, omit or overwrite imported source entries. Keep request guards shared across every API, and test malformed input, analysis slot release/cancellation, archive integrity and expansion limits before changing those boundaries.
+
+
+The build module exposes a pure `buildHtml()` function. Unit tests compare its result to the committed standalone HTML; a stale build fails locally as well as in CI. New frontend modules must be included in the build module list and use distinct top-level names because the dependency-free bundle flattens their ESM declarations.
+
+Guided review must use a fresh tool-disabled session, the full source/draft digest and saved revision, strict report validation, cancellation and explicit user recording. Never convert a requested review into an automatic pass, drop uncertain rights, or bypass inherited import provenance. All new API routes require the same local-origin and JSON bounds checks.

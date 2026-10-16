@@ -8,7 +8,7 @@ export const quote = value => String(value ?? '').split('\n').map(line => '> ' +
 export const unquote = value => value.trim().split('\n').map(line => line.replace(/^> ?/,'')).join('\n').trim();
 
 export function blankProject(title='Untitled skill') {
-  return {schemaVersion:1,id:uid(),title,slug:slugify(title),description:'',purpose:'',input:'',outcome:'',instructions:'Ask for missing inputs. Do not invent facts or treat unavailable data as zero.',extraFrontmatter:'',revision:1,
+  return {schemaVersion:1,sourceOrigin:'authored',id:uid(),title,slug:slugify(title),description:'',purpose:'',input:'',outcome:'',instructions:'Ask for missing inputs. Do not invent facts or treat unavailable data as zero.',extraFrontmatter:'',revision:1,
     steps:[],definitions:[],references:[],resources:[],screens:{input:[],output:[],instructions:'',sampleRows:[]},scenarios:[],originals:[],importWarnings:[],warningsAcknowledged:false,createdAt:new Date().toISOString()};
 }
 export function newStep(title='New step') {
@@ -29,5 +29,10 @@ export function definitionValue(project,facet) {
   return facet.override || definition?.value || '';
 }
 export function embeddedCode(text) {
-  return /^(?:\s*>\s*)?\s*(`{3,}|~{3,})\s*(python\b|py\b|html\b|htm\b)/im.test(text) || /<(?:html|head|body|script|div|iframe|style)\b[^>]*>/i.test(text);
+  const source=String(text??'');
+  if(/^(?:\s*>\s*)?\s*(`{3,}|~{3,})\s*(python\b|py\b|html\b|htm\b)/im.test(source))return true;
+  // A single quoted tag name can describe a prohibition in English. Attributes,
+  // tag bodies and executable blocks remain source content rather than prose.
+  const prose=source.replace(/(`+)([^`\r\n]+?)\1/g,(whole,ticks,body)=>/^<\/?[a-z][\w:-]*\s*\/?>$/i.test(body.trim())?'':whole);
+  return /<(?:html|head|body|script|div|iframe|style)\b[^>]*>/i.test(prose);
 }

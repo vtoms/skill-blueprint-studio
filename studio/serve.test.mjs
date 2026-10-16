@@ -37,6 +37,10 @@ test('local server serves the app, persists projects, rejects stale writes, and 
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:'short'})})).status,400);
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:JSON.stringify({prompt:'Create a record review skill.'})})).status,403);
   assert.equal((await fetch(base+'/api/skill-optimize')).status,405);
+  assert.equal((await fetch(base+'/api/skill-review')).status,405);
+  assert.equal((await fetch(base+'/api/skill-review',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,400);
+  assert.equal((await fetch(base+'/api/skill-review',{method:'POST',headers:{'Content-Type':'text/plain'},body:'{}'})).status,400);
+  assert.equal((await fetch(base+'/api/skill-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({padding:'x'.repeat(17000)})})).status,413);
   assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:'{}'})).status,403);
   assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'text/plain'},body:'{}'})).status,400);
   assert.equal((await fetch(base+'/api/skill-optimize',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,400);
@@ -56,7 +60,7 @@ test('local server serves the app, persists projects, rejects stale writes, and 
   assert.equal((await fetch(base+'/api/analyze',{method:'POST',body:'[null]'})).status,400);
   assert.equal((await fetch(base+'/api/analyze')).status,405);
   for(const headers of [{Host:'example.invalid:'+port},{'Sec-Fetch-Site':'cross-site'},{Origin:'https://example.com'}]){
-   for(const endpoint of ['/api/workspace','/api/skill-draft','/api/skill-optimize','/api/analyze']){const status=await new Promise((resolve,reject)=>{const req=httpRequest(base+endpoint,{method:'POST',headers:{'Content-Type':'application/json',...headers}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.on('error',reject);req.end('[]');});assert.equal(status,403,endpoint);}
+   for(const endpoint of ['/api/workspace','/api/skill-draft','/api/skill-optimize','/api/skill-review','/api/analyze']){const status=await new Promise((resolve,reject)=>{const req=httpRequest(base+endpoint,{method:'POST',headers:{'Content-Type':'application/json',...headers}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.on('error',reject);req.end('[]');});assert.equal(status,403,endpoint);}
   }
   assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'text/plain'},body:'[]'})).status,400);
   assert.equal((await fetch(base+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:'{invalid'})).status,400);

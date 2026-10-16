@@ -6,7 +6,7 @@ A local visual authoring prototype for building reviewable Claude skills. Define
 
 The app always opens on **Projects**, including after a reload. Create a project or open an existing one to see its skills. A project starts empty and can contain multiple independent skills.
 
-Choose **Add skill**, then **Create a fresh skill** or **Import an existing skill**. A fresh skill starts with **Start with a prompt**: describe its goal, inputs, outputs, rules, tools and exceptions, generate a draft through your local Claude Code CLI, review it, and open the editor. **Start blank** provides manual authoring. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
+Choose **Add skill**, then **Describe a new skill** or **Import an existing skill**. A fresh skill starts with **Start with a prompt**: describe its goal, inputs, outputs, rules, tools and exceptions, generate a draft through your local Claude Code CLI, review it, and open the editor. **Start blank** provides manual authoring. Imports open a proposed-workflow review before they are added. Adding a skill preserves existing skills.
 
 Skills open on **Brief**. The editor follows seven directly accessible sections:
 
@@ -95,11 +95,13 @@ Git distributes application code and the empty database template. It does not sy
 
 ## Independent review of imports
 
-Imported skills require a current independent adversarial review before normal export. Download a review packet, have a separate reviewer inspect the original source and converted draft in a fresh context, and import their completed JSON report.
+Imported skills and authored skills with active external supporting files require a current independent adversarial review before normal export. Finish local checks first, then choose **Run fresh AI review** to use a separate, tool-disabled Claude Code session. Inspect its findings and licensing assessment before choosing **Record this review**. A second person is optional.
 
-The report must cover all required topics, establish permission for the intended use, match the current SHA-256 snapshot, and have no unresolved critical, high, or medium findings. Edits to reviewed specifications invalidate the pass. Static indicators and resource approvals cannot replace this review.
+For another reviewer, expand **Use another reviewer or load an existing report**. Download the packet, copy the reviewer instructions, and attach the packet in a fresh AI chat or send it to an independent colleague. Paste the completed JSON report (a surrounding JSON code fence is accepted), or load its JSON file. Invalid reports show all schema problems together.
 
-See [the internal review rule](studio/INDEPENDENT_REVIEW_RULE.md). This prototype accepts externally completed reports; it does not invoke a model reviewer. Reviewer identity is declared rather than authenticated, and local project files are editable.
+A review can legitimately return changes required or unknown licensing; recording it keeps download blocked. The report must cover all required topics, establish permission for the intended use, match the current SHA-256 snapshot, and have no unresolved critical, high, or medium findings. Edits to reviewed specifications invalidate the pass. Static indicators and resource approvals cannot replace this review.
+
+See [the internal review rule](studio/INDEPENDENT_REVIEW_RULE.md). Review is explicitly requested and never automatically approved. The local CLI shares the existing drafting/improvement slot, uses no tools, and sends the complete packet to the signed-in provider. AI packets above 600,000 characters are rejected without truncation; use the external reviewer route. Reviewer identity is declared rather than authenticated, and local project files are editable.
 
 ## Tests and build
 
@@ -143,3 +145,8 @@ The application is licensed under [MIT](LICENSE). See [the provenance and runtim
 Run `npm test` for the workflow, review, database, persistence, and HTTP tests. Run `npm run test:analyzer` for Python analyzer tests (`python3` may be required on some systems). Set `STUDIO_PYTHON` before running `npm test` when Python is not on PATH. `npm run db:template` regenerates only the empty database template; ordinary builds never touch the working database. See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and the [changelog](CHANGELOG.md).
 
 For solo import review, combined step confirmation, administrator-provided tool identifiers, startup behavior and runtime acceptance criteria, see [consultant checks and platform integration](docs/CONSULTANT_CHECKS.md).
+
+
+## Assessment follow-up
+
+The [0.10.0 implementation and validation report](docs/ASSESSMENT_FOLLOW_UP.md) maps the verified architecture/UI assessment to shipped changes, regression evidence and remaining acceptance checks. It distinguishes application tests from testing a generated skill on its target platform.

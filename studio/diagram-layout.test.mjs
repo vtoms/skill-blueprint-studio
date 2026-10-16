@@ -8,6 +8,12 @@ import {optimizationSource,optimizationProposal} from './optimization-test-suppo
 import {skillFromOptimization} from './skill-optimization.mjs';
 
 function diagramSkill(){const skill=blankProject('Example process');skill.steps=['Collect','Review','Summarize','Present'].map(newStep);return skill;}
+test('start and finish boundaries avoid shapes after reverse spatial arrangement',()=>{
+ const skill=diagramSkill(),positions=skill.steps.map((step,index)=>({stepId:step.id,x:72,y:160+(3-index)*220})),graph=diagramGeometry(skill,positions);
+ const overlap=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
+ for(const boundary of [graph.start,graph.end])assert.ok(graph.nodes.every(node=>!overlap(boundary,node)));
+ assert.equal(overlap(graph.start,graph.end),false);assert.deepEqual(graph.nodes.map(node=>node.stepId),skill.steps.map(step=>step.id));
+});
 test('diagram layout is spatial, preserves execution order and restores custom positions',()=>{
  const skill=diagramSkill(),order=skill.steps.map(step=>step.id),positions=autoDiagramPositions(skill.steps);assert.notEqual(positions[0].x,positions[1].x);assert.notEqual(positions[1].y,positions[2].y);skill.diagram={schemaVersion:1,positions:[{stepId:skill.steps[1].id,x:900,y:400}]};assert.deepEqual(diagramPositions(skill)[1],skill.diagram.positions[0]);assert.deepEqual(skill.steps.map(step=>step.id),order);assert.deepEqual(readProject(JSON.stringify(skill)).diagram,skill.diagram);
  const removed=skill.steps.shift();reconcileDiagramLayout(skill);assert.ok(!skill.diagram.positions.some(position=>position.stepId===removed.id));assert.equal(skill.diagram.positions.length,skill.steps.length);const restored=readProject(JSON.stringify(skill));assert.equal(restored.diagram.positions.find(position=>position.stepId===order[1]).x,900);

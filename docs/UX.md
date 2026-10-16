@@ -10,7 +10,7 @@ The editor follows a repeatable story: Projects → Project skills → Describe,
 | List | Scanning handoffs and checks | Compact table, attention filter and run-order buttons |
 | Canvas | Understanding and arranging the process | Spatial shapes, labelled connectors and selection-driven editor |
 
-All three edit the same steps, inside items, values and files. View switches preserve selection and expanded inside items. The Canvas is a two-dimensional editor on desktop and mobile; mobile places the inspector beneath it. It supports start/finish shapes, orthogonal arrows, insertion points, dragging, background pan, zoom, Fit, Focus step and Auto arrange. Fit shows the whole process; Focus step shows the selected shape at full size. Large diagrams require zoom/pan or the text outline for detail.
+All three edit the same steps, inside items, values and files. View switches preserve selection and expanded inside items. The Canvas is a two-dimensional editor on desktop and mobile; mobile switches between **Process overview** and **Edit selected step**, so the diagram and editor do not compete for the same viewport. Selecting a shape opens the editor; returning to Canvas selects the overview. It supports start/finish shapes, orthogonal arrows, insertion points, dragging, background pan, zoom, Fit, Focus step and Auto arrange. Fit shows the whole process; Focus step shows the selected shape at full size. **Find a step** jumps to a named step at full scale. Below 45% zoom, the overview shows titles while hiding unreadable contract/status text; the full editor and text outline retain all details. Start/finish boundaries avoid other shapes after arrangement.
 
 Spatial arrangement and execution order are separate. Dragging or moving a shape changes coordinates only. Run earlier/later changes the ordered step array, connects each step to its new predecessor and flags affected handoffs for review. Inserting or deleting steps uses the same review mechanism. Coordinates persist with the skill and backups; viewport pan and zoom last only for the current editor session. Layout alone preserves independent review and test freshness.
 
@@ -58,3 +58,14 @@ Standards, product documentation and expert guidance support these choices; they
 ## Appearance
 
 The persistent header switch shows the current Light or Dark mode, with a sun/moon icon, a descriptive action label, keyboard activation and pressed state. The system preference is the initial default; choosing a mode overrides later system changes. The choice is saved in the local workspace database. Switching changes shared semantic CSS tokens and native control color-scheme without rerendering the editor or touching skill instructions. SVG artwork and connectors use those same tokens. Both modes retain blue primary actions and distinct warning/error colors.
+
+
+## Review, files and responsive editing (0.10.0)
+
+Review & package presents local fixes before independent review, then download and external testing. Guided Claude review requires an explicit request and report acceptance; the external packet/paste/load route remains available. Essential provider transmission, licensing, blocker and freshness information stays visible.
+
+Supporting files initially opens a populated category. Inside-step counts include bound references and resources. Remove from skill describes affected steps and dependencies, clears active bindings and confirmations, and preserves original bytes; Undo restores the full change. Original files provides Use in skill to rebuild an editable file description and reanalyze it. Authored external-file skills and imported skills have distinct provenance labels.
+
+Projects remains the starting page, with Continue editing for the most recently edited skill. Repeated Restore navigation and Canvas run-order controls were removed. Optional keyboard explanations live behind the Canvas info button. Layout changes remain independent of semantic changes. Notifications do not capture pointer events; reordering controls have larger targets; required errors remain persistent. Mobile process chrome omits duplicate navigation and purpose text already available through breadcrumbs/Brief.
+
+Typing coalesces stage/controller rebuilds after 180 ms while preserving the active editor. Chapter status uses the same validation result for that refresh. Autosave defers workspace serialization until its 200 ms debounce/explicit flush, and preserves in-flight snapshots, conflict protection and retry state. Undo still retains independent copies of source history; originals are not shared across undo snapshots.

@@ -68,3 +68,12 @@ Layout changes save through the same SQLite revision/conflict controls and appea
 The optional workspace-level `appearance` value accepts `light` or `dark`. An absent preference follows the device color-scheme setting. An explicit choice is saved through the same SQLite transactions, acknowledged saves and conflict protection as other workspace changes. Other browsers use it after reload; it is not live-synchronized. Separate servers keep independent settings. The workspace/database schema version remains 1 and older workspaces remain valid. The empty database template is unchanged.
 
 Appearance is outside every skill, so toggling it does not change skill revision, generated instructions, independent review evidence, or test freshness. Workspace backups and database snapshots include the preference; restoring projects adds their content while retaining the current workspace's appearance. Project and individual-skill backups do not carry UI preferences. Standalone-file preview holds the choice in memory only. No new browser storage is used.
+
+
+## Authored origin and detached sources (0.10.0)
+
+An optional skill JSON field, `sourceOrigin`, distinguishes newly authored and imported skills. Existing backups remain readable without backfilling or rewriting historical review snapshots. Unknown legacy source provenance keeps its conservative independent-review gate. This is document metadata; the SQLite schema and empty template are unchanged.
+
+Removing an active supporting file preserves its original bytes in the project, backup and original-source download. Affected step bindings are cleared and need confirmation again. Other dependency declarations remain visible for correction. Restoring a file creates a fresh unreviewed description; original bytes are not duplicated. This is not a permanent source-deletion control.
+
+Autosave serializes the current working copy when the debounce expires or a caller flushes, not on each keystroke. Each outgoing request has a fixed serialized snapshot. Changes during a request remain pending for a later acknowledgement; failed/stale writes preserve recovery and explicit retry/reload behavior.

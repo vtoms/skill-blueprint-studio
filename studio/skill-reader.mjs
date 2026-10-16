@@ -7,6 +7,7 @@ import {validateOptimizationRecord} from './optimization-record.mjs';
 export function readProject(text) {
   if(text.length>32*1024*1024)throw new Error('Project file is too large.');const value=JSON.parse(text);
   if(value?.schemaVersion!==1||!Array.isArray(value.steps)||!Array.isArray(value.references)||!Array.isArray(value.definitions)||!Array.isArray(value.scenarios)||!value.screens)throw new Error('This is not a Skill Blueprint Studio project file.');
+  if(value.sourceOrigin!==undefined&&!['authored','imported'].includes(value.sourceOrigin))throw new Error('Invalid skill source origin.');
   const strings=['title','slug','description','purpose','input','outcome','instructions'];for(const key of strings)if(typeof value[key]!=='string')throw new Error('Invalid project field: '+key);
   if(value.steps.length>100||value.references.length>100)throw new Error('This prototype supports up to 100 steps and references.');
   for(const s of value.steps){for(const key of ['id','title','kind','job','output'])if(typeof s[key]!=='string')throw new Error('Invalid step field: '+key);if(!Array.isArray(s.facets)||!Array.isArray(s.references)||s.facets.length>100||s.references.some(r=>typeof r!=='string'))throw new Error('Invalid step facets or references.');for(const f of s.facets)for(const key of ['id','title','type','instructions'])if(typeof f[key]!=='string')throw new Error('Invalid facet field.');s.exampleInput=String(s.exampleInput||'');s.exampleOutput=String(s.exampleOutput||'');}

@@ -5,6 +5,7 @@ export {claudeExecutable} from './claude-executable.mjs';
 import {join,resolve,dirname,basename} from 'node:path';
 import {SKILL_DRAFT_SCHEMA,skillFromDraft} from './skill-draft.mjs';
 import {OPTIMIZATION_SCHEMA,OPTIMIZATION_SYSTEM_PROMPT,optimizationContext,skillFromOptimization} from './skill-optimization.mjs';
+import {cliReviewContext,checkCliReview} from './review-request.mjs';
 
 export const DRAFTING_SYSTEM_PROMPT=`You draft a fresh skill for Skill Blueprint Studio, a visual authoring application. Return only the requested structured blueprint. Do not run the skill or claim any test has passed.
 Use a short sequence of meaningful input-to-output steps. Each step runs in order; its input is the preceding step's output. Put instructions, rules, conditional choices, tools, exceptions and references INSIDE the relevant step as facets. There are no graph branches or executable routing between steps.
@@ -26,10 +27,10 @@ export function draftingArguments(model='',schema=SKILL_DRAFT_SCHEMA,systemPromp
 }
 
 function cliFailure(error){
- if(error.name==='AbortError')return new Error('Draft generation was cancelled.');
+ if(error.name==='AbortError')return new Error('The Claude request was cancelled.');
  if(error.code==='ENOENT')return new Error('Claude Code could not be found. If it is installed, set STUDIO_CLAUDE_PATH to its executable and restart Studio; otherwise install Claude Code.');
  if(error.killed)return new Error('Claude did not finish within five minutes. Shorten the request or try again.');
- return new Error('Claude Code could not complete this draft. Check its sign-in, account limits, and configured model, then try again.');
+ return new Error('Claude Code could not complete this request. Check its sign-in, account limits, and configured model, then try again.');
 }
 
 export function createClaudeDrafting({dataDirectory,environment=process.env,run=invokeClaude}={}){
@@ -72,5 +73,19 @@ export function createClaudeDrafting({dataDirectory,environment=process.env,run=
   }catch(error){if(error.code||error.name==='AbortError')throw cliFailure(error);throw error;}
   finally{busy=false;if(folder){if(dirname(folder)!==root||!basename(folder).startsWith('draft-'))throw new Error('Invalid draft cleanup location.');await rm(folder,{recursive:true,force:true});}}
  }
- return {status,generate,optimize};
+ async function review(source,{signal}={}){
+  if(busy){const error=new Error('Another draft, improvement or review is running. Try again when it finishes.');error.status=409;throw error;}
+  busy=true;let folder;
+  try{
+   const available=await status();if(!available.ready)throw new Error(available.message);
+   const context=await cliReviewContext(source);folder=await mkdtemp(join(root,'draft-'));
+   const output=await run(executable,draftingArguments(model,context.schema,context.systemPrompt),{cwd:folder,signal,input:context.input,timeout:300000});
+   let result;try{result=JSON.parse(output);}catch{throw new Error('Claude did not return a structured review. Use the external reviewer option or try again.');}
+   if(result.is_error||!result.structured_output)throw new Error('Claude could not complete the independent review. No review was recorded.');
+   const report=await checkCliReview(context,result.structured_output);
+   return {report,model:Object.keys(result.modelUsage||{}).join(', ')||model||'Claude Code default'};
+  }catch(error){if(error.code||error.name==='AbortError')throw cliFailure(error);throw error;}
+  finally{busy=false;if(folder){if(dirname(folder)!==root||!basename(folder).startsWith('draft-'))throw new Error('Invalid review cleanup location.');await rm(folder,{recursive:true,force:true});}}
+ }
+ return {status,generate,optimize,review};
 }

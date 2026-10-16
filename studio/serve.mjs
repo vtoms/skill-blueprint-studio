@@ -9,6 +9,7 @@ import {createClaudeDrafting} from './claude-drafting.mjs';
 import {readWorkspace} from './workspace.mjs';
 import {verifyWorkspaceOptimizationEvidence} from './independent-review.mjs';
 import {requestOptimization} from './optimization-request.mjs';
+import {requestIndependentReview} from './review-request.mjs';
 
 const root=fileURLToPath(new URL('.',import.meta.url));
 const port=Number(process.env.STUDIO_PORT||8766);
@@ -26,6 +27,13 @@ const analyzeRequest=createSourceAnalysis({python,script:resolve(root,'analyze_s
 const server=createServer({requestTimeout:30000,headersTimeout:10000},async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
+  if(pathname==='/api/skill-review'){
+   try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
+   if(req.method!=='POST'){jsonResponse(res,405,{error:'Use POST for independent review.'});return;}
+   const controller=new AbortController();res.once('close',()=>{if(!res.writableEnded)controller.abort();});
+   try{const input=await readDatabaseRequest(req,16000),result=await requestIndependentReview({readWorkspace:()=>workspaceDatabase.read().workspace,engine:drafting},input,{signal:controller.signal});if(!res.destroyed)jsonResponse(res,200,result);}
+   catch(error){if(!res.destroyed)jsonResponse(res,error.status||400,{error:error.message});}return;
+  }
   if(pathname==='/api/skill-optimize'){
    try{localRequest(req);}catch(error){jsonResponse(res,403,{error:error.message});return;}
    if(req.method!=='POST'){jsonResponse(res,405,{error:'Use POST for skill optimization.'});return;}

@@ -67,6 +67,6 @@ export function importMarkdownFiles(files) {
     project.importWarnings.push('Headings are proposed steps, not an AI interpretation. Check the order, move shared instructions out of steps if needed, and define every input and output.');
     if(/choose (?:your )?(?:approach|workflow|path) by task/i.test(front.body))project.importWarnings.push('The source routes by task. Review its alternative paths before approving a sequential workflow; heading order does not capture that routing.');
   }
-  project.importedSkill=true;delete project.independentReview;
+  project.importedSkill=true;project.sourceOrigin='imported';delete project.independentReview;
   return readProject(JSON.stringify(project));
 }

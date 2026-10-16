@@ -62,6 +62,23 @@ class English:
         self.unhandled = set()
         self.count = 0
 
+    @staticmethod
+    def gap_label(name):
+        labels = {
+            'MatchSequence': 'Matching the items and order of a sequence needs explicit English instructions',
+            'MatchMapping': 'Matching named entries in a mapping needs explicit English instructions',
+            'MatchClass': 'Matching an object type and its fields needs explicit English instructions',
+            'MatchOr': 'Choosing between alternative matching patterns needs explicit English instructions',
+            'TryStar': 'Handling grouped exceptions needs explicit English instructions',
+            'TypeAlias': 'Defining a reusable type alias needs explicit English instructions',
+        }
+        if name in labels:
+            return labels[name]
+        if ' ' in name:
+            return name
+        words = ''.join((' ' + char.lower()) if char.isupper() else char for char in name).strip()
+        return 'The ' + words + ' construct needs explicit English instructions'
+
     def expr(self, n):
         if n is None:
             return 'no value'
@@ -119,7 +136,7 @@ class English:
         if isinstance(n, (ast.Yield, ast.YieldFrom)): return ('yield each item from ' if isinstance(n, ast.YieldFrom) else 'yield ') + self.expr(n.value)
         if isinstance(n, ast.Await): return 'await completion of ' + self.expr(n.value)
         self.unhandled.add(type(n).__name__)
-        return '[Requires explicit translation: ' + type(n).__name__ + ']'
+        return '[' + self.gap_label(type(n).__name__) + ']'
 
     def block(self, nodes, depth=0):
         lines = []
@@ -143,7 +160,7 @@ class English:
                     elif isinstance(pattern, ast.MatchAs) and pattern.pattern is None: condition = 'any remaining value' + (', binding it to ' + pattern.name if pattern.name else '')
                     else:
                         self.unhandled.add(type(pattern).__name__)
-                        condition = 'requires explicit pattern translation: ' + type(pattern).__name__
+                        condition = self.gap_label(type(pattern).__name__)
                     lines.append('  ' * (depth + 1) + '- Case: ' + condition + (', and ' + self.expr(case.guard) if case.guard else '') + ':')
                     lines += self.block(case.body, depth + 2)
             elif isinstance(n, (ast.For, ast.AsyncFor, ast.While)):
@@ -169,7 +186,7 @@ class English:
                 emit('Provide the operation ' + n.name + ' defined below' + (', applying decorators ' + ', '.join(self.expr(d) for d in n.decorator_list) if n.decorator_list else '') + '.')
             elif isinstance(n, ast.ClassDef):
                 emit('Provide the object type ' + n.name + (', derived from ' + ', '.join(self.expr(b) for b in n.bases) if n.bases else '') + ', with these class-scope actions:'); lines += self.block(n.body, depth + 1)
-            else: self.unhandled.add(type(n).__name__); emit('Requires explicit translation: ' + type(n).__name__ + '.')
+            else: self.unhandled.add(type(n).__name__); emit(self.gap_label(type(n).__name__) + '.')
         return lines
 
 
@@ -177,9 +194,10 @@ def python_contract(path, content):
     tree = ast.parse(content, filename=path)
     english = English()
     functions = []
-    def walk(nodes, prefix=''):
+    def walk(nodes, prefix='', context=()):
         for n in nodes:
-            if isinstance(n, ast.ClassDef): walk(n.body, prefix + n.name + '.')
+            if isinstance(n, ast.ClassDef):
+                walk(n.body, prefix + n.name + '.', context + ('Within the object type ' + prefix + n.name + '.',))
             elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 positional = n.args.posonlyargs + n.args.args
                 defaults = [None] * (len(positional) - len(n.args.defaults)) + n.args.defaults
@@ -187,13 +205,40 @@ def python_contract(path, content):
                 parameters += [a.arg + ('; default: ' + english.expr(d) if d is not None else '; required named argument') for a, d in zip(n.args.kwonlyargs, n.args.kw_defaults)]
                 if n.args.vararg: parameters.append(n.args.vararg.arg + '; remaining positional arguments')
                 if n.args.kwarg: parameters.append(n.args.kwarg.arg + '; remaining named arguments')
-                functions.append({'name': prefix + n.name, 'start': n.lineno, 'end': n.end_lineno, 'inputs': parameters, 'doc': ast.get_docstring(n) or '', 'behavior': '\n'.join(english.block(n.body))})
-                walk(n.body, prefix + n.name + '.')
+                functions.append({'name': prefix + n.name, 'start': n.lineno, 'end': n.end_lineno, 'inputs': parameters, 'doc': ast.get_docstring(n) or '', 'context': list(context), 'behavior': '\n'.join(english.block(n.body))})
+                walk(n.body, prefix + n.name + '.', context + ('Only when operation ' + prefix + n.name + ' reaches this definition; retain its enclosing bindings.',))
+            elif isinstance(n, ast.If):
+                condition = english.expr(n.test)
+                walk(n.body, prefix, context + ('Only when ' + condition + '.',))
+                walk(n.orelse, prefix, context + ('Only when ' + condition + ' is false.',))
+            elif isinstance(n, (ast.For, ast.AsyncFor, ast.While)):
+                condition = ('For each ' + english.expr(n.target) + ' in ' + english.expr(n.iter)) if hasattr(n, 'target') else ('While ' + english.expr(n.test))
+                walk(n.body, prefix, context + (condition + '; define this operation only if the iteration reaches it.',))
+                walk(n.orelse, prefix, context + ('After the loop at source line ' + str(n.lineno) + ' completes normally without an early break.',))
+            elif isinstance(n, (ast.With, ast.AsyncWith)):
+                walk(n.body, prefix, context + ('After entering the managed resources at source line ' + str(n.lineno) + '; retain their enclosing bindings.',))
+            elif isinstance(n, (ast.Try, ast.TryStar)):
+                location = 'the attempt at source line ' + str(n.lineno)
+                walk(n.body, prefix, context + ('When ' + location + ' reaches this definition.',))
+                for handler in n.handlers:
+                    exception = english.expr(handler.type) if handler.type else 'any exception'
+                    walk(handler.body, prefix, context + ('Only while handling ' + exception + ' from ' + location + '.',))
+                walk(n.orelse, prefix, context + ('Only after ' + location + ' succeeds without an exception.',))
+                walk(n.finalbody, prefix, context + ('During finalization of ' + location + ', on success or failure.',))
+            elif isinstance(n, ast.Match):
+                for index, case in enumerate(n.cases, 1):
+                    walk(case.body, prefix, context + ('Only when case ' + str(index) + ' of the match at source line ' + str(n.lineno) + ' is the first matching case whose guard succeeds.',))
+            else:
+                # Future statement kinds must not hide nested declarations. The English
+                # visitor separately flags their unsupported semantics for manual review.
+                children = list(ast.iter_child_nodes(n))
+                if children:
+                    walk(children, prefix, context + (('Inside the construct at source line ' + str(n.lineno) + '; its conditions require review.',) if isinstance(n, ast.stmt) else ()))
     walk(tree.body)
     module_behavior = '\n'.join(english.block(tree.body))
     purpose = 'Reproduce the operations declared by ' + path + ' using the reviewed input, output and behavior contracts.'
-    behavior = '## Module setup\n\n' + module_behavior + '\n\n' + '\n\n'.join('## Operation: ' + f['name'] + '\n\nInputs:\n' + ('\n'.join('- ' + a for a in f['inputs']) or '- None.') + '\n\nBehavior:\n' + f['behavior'] for f in functions)
-    return {'kind':'generate','purpose':purpose,'inputs':'Use the operation inputs and command-line arguments listed in the behavior contract. Preserve required arguments, optional defaults, and interface names.','outputs':'Generate ' + path + ' in the runtime workspace. Its callable operations, command interface, return values, diagnostics, and side effects must follow this specification.','behavior':behavior,'errors':'Preserve the exception and diagnostic behavior specified by each operation. Do not replace a failed validation or unavailable converter with a successful result. Do not alter input files outside the specified mutation paths.','checks':'Before use, verify syntax and required imports. Exercise the declared input defaults, every error path, and boundary conditions. Verify file writes, return values, and process exit outcomes. Compare observed results with the operation contract. Record test failures explicitly; do not assume this draft proves runtime equivalence.','functionCount':len(functions),'functions':[{'name':f['name'],'start':f['start'],'end':f['end']} for f in functions],'untranslated':sorted(english.unhandled),'statementCount':english.count}
+    behavior = '## Module setup\n\n' + module_behavior + '\n\n' + '\n\n'.join('## Operation: ' + f['name'] + '\n\nDefinition starts at source line ' + str(f['start']) + '.\n\nDefinition context:\n' + ('\n'.join('- ' + item for item in f['context']) or '- Defined at module scope when setup reaches this declaration.') + '\n\nInputs:\n' + ('\n'.join('- ' + a for a in f['inputs']) or '- None.') + '\n\nBehavior:\n' + f['behavior'] for f in functions)
+    return {'kind':'generate','purpose':purpose,'inputs':'Use the operation inputs and command-line arguments listed in the behavior contract. Preserve required arguments, optional defaults, and interface names.','outputs':'Generate ' + path + ' in the runtime workspace. Its callable operations, command interface, return values, diagnostics, and side effects must follow this specification.','behavior':behavior,'errors':'Preserve the exception and diagnostic behavior specified by each operation. Do not replace a failed validation or unavailable converter with a successful result. Do not alter input files outside the specified mutation paths.','checks':'Before use, verify syntax and required imports. Exercise the declared input defaults, every error path, and boundary conditions. Verify file writes, return values, and process exit outcomes. Compare observed results with the operation contract. Record test failures explicitly; do not assume this draft proves runtime equivalence.','functionCount':len(functions),'functions':[{'name':f['name'],'start':f['start'],'end':f['end'],'context':f['context']} for f in functions],'untranslated':[english.gap_label(name) for name in sorted(english.unhandled)],'statementCount':english.count}
 
 
 def structure_contract(path, data):

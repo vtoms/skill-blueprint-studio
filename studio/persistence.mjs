@@ -16,9 +16,9 @@ export function createWorkspacePersistence({request=globalThis.fetch?.bind(globa
   function schedule(workspace){
     if(preview){report('preview');return;}
     if(!loaded)return;
-    const payload=JSON.stringify(workspace);
-    if(payload===lastSaved&&!inFlight){pending='';clearTimeout(timer);if(!blocked)report('saved');return;}
-    pending=payload;
+    // Keep the live working copy until the debounce expires. Large retained
+    // sources are serialized once per save, rather than once per keystroke.
+    pending=workspace;
     if(blocked)return;
     report('saving');clearTimeout(timer);timer=setTimeout(()=>{flush().catch(()=>{});},delay);
   }
@@ -26,8 +26,10 @@ export function createWorkspacePersistence({request=globalThis.fetch?.bind(globa
     clearTimeout(timer);
     if(preview||!loaded||blocked)return false;
     if(inFlight){await inFlight;return pending&&!blocked?flush():!blocked;}
-    if(!pending||pending===lastSaved){pending='';report('saved');return true;}
-    const payload=pending;pending='';report('saving');
+    if(!pending){report('saved');return true;}
+    const payload=typeof pending==='string'?pending:JSON.stringify(pending);pending='';
+    if(payload===lastSaved){report('saved');return true;}
+    report('saving');
     inFlight=(async()=>{
       try{
         const response=await request('/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision,workspace:JSON.parse(payload)})}),result=await response.json();
@@ -35,10 +37,10 @@ export function createWorkspacePersistence({request=globalThis.fetch?.bind(globa
         if(!Number.isSafeInteger(result.revision))throw new Error('Invalid save acknowledgment.');
         revision=result.revision;lastSaved=payload;if(pending===lastSaved)pending='';
         if(!pending)report('saved');return true;
-      }catch(error){if(!pending)pending=payload;blocked=true;report(error.conflict?'conflict':'error',error.message);return false;}
+      }catch(error){if(!pending)pending=payload;blocked=true;clearTimeout(timer);report(error.conflict?'conflict':'error',error.message);return false;}
     })();
     const result=await inFlight;inFlight=null;
-    if(pending&&!blocked){timer=setTimeout(()=>{flush().catch(()=>{});},delay);}return result;
+    if(pending&&!blocked){clearTimeout(timer);timer=setTimeout(()=>{flush().catch(()=>{});},delay);}return result;
   }
   async function retry(){if(status==='conflict')return false;blocked=false;return loaded?flush():load();}
   async function reload(){if(inFlight)await inFlight;return load();}

@@ -1,5 +1,5 @@
 export const DIAGRAM_STEP_SIZE={width:248,height:160};
-export const DIAGRAM_BOUNDARY_SIZE={width:176,height:74};
+export const DIAGRAM_BOUNDARY_SIZE={width:208,height:88};
 
 export function autoDiagramPositions(steps){const columns=steps.length<=6?2:steps.length<=12?3:Math.ceil(Math.sqrt(steps.length));return steps.map((step,index)=>{const row=Math.floor(index/columns),column=row%2?columns-1-index%columns:index%columns;return {stepId:step.id,x:72+column*356,y:160+row*220};});}
 export function diagramPositions(skill){const ids=new Set(skill.steps.map(step=>step.id)),saved=new Map((skill.diagram?.positions||[]).filter(position=>ids.has(position.stepId)).map(position=>[position.stepId,position])),occupied=[...saved.values()];return autoDiagramPositions(skill.steps).map(position=>{if(saved.has(position.stepId))return {...saved.get(position.stepId)};const candidate={...position};for(let attempt=0;occupied.some(other=>Math.abs(other.x-candidate.x)<DIAGRAM_STEP_SIZE.width+24&&Math.abs(other.y-candidate.y)<DIAGRAM_STEP_SIZE.height+24)&&attempt<1000;attempt++){candidate.y+=220;if(candidate.y>50000){candidate.y=160;candidate.x=(candidate.x+356)%49900;}}occupied.push(candidate);return candidate;});}
@@ -11,8 +11,13 @@ export function validateDiagramLayout(skill){
 }
 export function diagramGeometry(skill,positions=diagramPositions(skill)){
  const nodes=positions.map(position=>({...position,...DIAGRAM_STEP_SIZE})),first=nodes[0],last=nodes.at(-1);
- const start={id:'diagram-input',x:first?first.x+36:72,y:first?Math.max(16,first.y-128):24,...DIAGRAM_BOUNDARY_SIZE};
- const end={id:'diagram-output',x:last?last.x+36:72,y:last?last.y+DIAGRAM_STEP_SIZE.height+50:160,...DIAGRAM_BOUNDARY_SIZE};
+ const offset=(DIAGRAM_STEP_SIZE.width-DIAGRAM_BOUNDARY_SIZE.width)/2;
+ const start={id:'diagram-input',x:first?first.x+offset:72,y:first?Math.max(16,first.y-128):24,...DIAGRAM_BOUNDARY_SIZE};
+ const end={id:'diagram-output',x:last?last.x+offset:72,y:last?last.y+DIAGRAM_STEP_SIZE.height+50:160,...DIAGRAM_BOUNDARY_SIZE};
+ const overlaps=(a,b)=>a.x<b.x+b.width+20&&a.x+a.width+20>b.x&&a.y<b.y+b.height+20&&a.y+a.height+20>b.y;
+ // Boundary positions follow the first/last step but never cover another
+ // shape after a user rearranges the canvas. Execution order is unchanged.
+ for(const boundary of [start,end])for(let attempt=0;attempt<1002&&[...nodes,...(boundary===end?[start]:[])].some(node=>overlaps(boundary,node));attempt++)boundary.y+=DIAGRAM_STEP_SIZE.height+60;
  const all=[start,...nodes,end],bounds={left:Math.max(0,Math.min(...all.map(node=>node.x))-40),top:Math.max(0,Math.min(...all.map(node=>node.y))-24),right:Math.max(...all.map(node=>node.x+node.width))+40,bottom:Math.max(...all.map(node=>node.y+node.height))+40};
  return {nodes,start,end,bounds,edges:all.slice(0,-1).map((node,index)=>({from:node,to:all[index+1],index}))};
 }

@@ -50,7 +50,30 @@ class SourceAnalysisTests(unittest.TestCase):
 
     def test_unknown_match_pattern_stays_flagged(self):
         contract = python_contract('scripts/route.py', 'def route(value):\n match value:\n  case [first, *rest]:\n   return first\n')
-        self.assertIn('MatchSequence', contract['untranslated'])
+        self.assertTrue(any('Matching the items and order' in gap for gap in contract['untranslated']))
+
+    def test_conditional_operations_keep_bodies_conditions_and_scope(self):
+        source = 'if enabled:\n def helper():\n  return 42\nelse:\n def helper():\n  return 7\ndef outer(flag):\n if flag:\n  def inner():\n   return 9\n return inner()\n'
+        contract = python_contract('scripts/conditional.py', source)
+        self.assertEqual(contract['functionCount'], 4)
+        self.assertEqual(contract['untranslated'], [])
+        self.assertIn('Return 42', contract['behavior'])
+        self.assertIn('Return 7', contract['behavior'])
+        self.assertIn('Return 9', contract['behavior'])
+        self.assertIn('Only when `enabled` is false', contract['behavior'])
+        inner = next(item for item in contract['functions'] if item['name'] == 'outer.inner')
+        self.assertTrue(any('enclosing bindings' in context for context in inner['context']))
+        self.assertTrue(any('`flag`' in context for context in inner['context']))
+
+    def test_operations_in_try_loops_contexts_and_match_are_inventoried(self):
+        source = 'try:\n def attempt(): return 1\nexcept Exception:\n def recovery(): return 2\nelse:\n def success(): return 3\nfinally:\n def finish(): return 4\nfor item in items:\n def per_item(): return item\nwith manager:\n def managed(): return 5\nmatch kind:\n case "one":\n  def selected(): return 6\n'
+        contract = python_contract('scripts/blocks.py', source)
+        self.assertEqual(contract['functionCount'], 7)
+        self.assertEqual(contract['untranslated'], [])
+        self.assertIn('handling `Exception`', contract['behavior'])
+        self.assertIn('first matching case', contract['behavior'])
+        for value in range(1, 7):
+            self.assertIn('Return ' + str(value), contract['behavior'])
 
     def test_html_inventory_preserves_labels_without_copying_scripts(self):
         contract = analyze_entry('screens/form.html', b'<html><body><label>Name</label><button onclick="danger()">Submit</button><script>secret_code()</script></body></html>')

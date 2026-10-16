@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0 — 2026-10-16
+
+- Add guided fresh-session Claude Code review with explicit provider disclosure, complete packet/schema validation, saved-revision/digest race checks, cancellation and report inspection before recording. Keep the independent gate and blocking findings; support external packet instructions, fenced JSON paste and file loading with all report errors.
+- Put local checks before independent review and explain the package/test sequence. Distinguish authored external files from imports while preserving conservative legacy/inherited review requirements.
+- Remove/restore active supporting files with dependency/step impact, undo, unchanged source originals and fresh review requirements. Open a populated file category and include attached files in inside-step counts.
+- Inventory Python definitions inside conditions, loops, exception blocks, context managers and match cases, preserving source-line/condition context. Humanize unsupported syntax gaps. Permit prose identifiers such as an inline bare tag while continuing to reject HTML/Python source.
+- Add a Projects continuation shortcut, Canvas step jump/full-scale focus, semantic zoom, collision-free start/finish boundaries, mobile overview/editor switching, compact navigation, larger reorder targets and pointer-transparent notifications. Consolidate duplicate actions and retain both themes/accessibility controls.
+- Coalesce workflow redraws, reuse validation results and defer serialization to save/flush while retaining conflict/retry/in-flight snapshot protection. Fix the preview default helper and add a local source-to-dist freshness test.
+- Update assessment, acceptance limits, storage, review, UX and license/dependency inventory. No runtime dependency, SQLite schema/template, MIT license or review-policy version change.
+
 ## 0.9.2 — 2026-10-16
 
 - Explain the independent import-review path for solo users: a separate fresh AI session may review the packet; self-confirmation still cannot replace independent evidence.

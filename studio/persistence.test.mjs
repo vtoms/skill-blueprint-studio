@@ -5,6 +5,13 @@ import {emptyWorkspace,createWorkspaceProject,addWorkspaceProject} from './works
 
 function api(){let workspace=emptyWorkspace(),revision=0;const writes=[];return {writes,get workspace(){return workspace;},request:async(url,options={})=>{if(options.method==='PUT'){const input=JSON.parse(options.body);if(input.revision!==revision)return {ok:false,status:409,json:async()=>({error:'A newer revision exists.'})};workspace=input.workspace;revision++;writes.push(input);return {ok:true,json:async()=>({revision})};}return {ok:true,json:async()=>JSON.parse(JSON.stringify({workspace,revision}))};}};}
 
+test('typing defers serialization and changes during a save are acknowledged separately',async()=>{
+ const service=api();let release,started;const arrived=new Promise(resolve=>started=resolve),waiting=new Promise(resolve=>release=resolve);let hold=true,serializations=0;
+ const client=createWorkspacePersistence({delay:100000,request:async(url,options)=>{if(options?.method==='PUT'&&hold){hold=false;started();await waiting;}return service.request(url,options);}}),workspace=await client.load();
+ workspace.toJSON=function(){serializations++;return {schemaVersion:this.schemaVersion,type:this.type,projects:this.projects};};addWorkspaceProject(workspace,createWorkspaceProject('Before'));
+ for(let i=0;i<10;i++)client.schedule(workspace);assert.equal(serializations,0);const first=client.flush();await arrived;assert.equal(serializations,1);workspace.projects[0].name='After';client.schedule(workspace);release();await first;assert.equal(client.hasChanges(),true);await client.flush();assert.equal(service.writes.length,2);assert.equal(service.writes[0].workspace.projects[0].name,'Before');assert.equal(service.workspace.projects[0].name,'After');assert.equal(client.hasChanges(),false);
+});
+
 test('changes are coalesced and saved only after the server acknowledges them',async()=>{
  const service=api(),states=[],client=createWorkspacePersistence({request:service.request,onStatus:value=>states.push(value.state),delay:100000});
  const workspace=await client.load();addWorkspaceProject(workspace,createWorkspaceProject('A'));client.schedule(workspace);workspace.projects[0].name='Updated A';client.schedule(workspace);assert.equal(client.status,'saving');await client.flush();assert.equal(service.writes.length,1);assert.equal(service.workspace.projects[0].name,'Updated A');assert.equal(client.status,'saved');assert.equal(client.hasChanges(),false);client.schedule(workspace);await client.flush();assert.equal(service.writes.length,1);
