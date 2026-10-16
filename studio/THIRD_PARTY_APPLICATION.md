@@ -41,3 +41,5 @@ The light/dark appearance controller, semantic color tokens and sun/moon SVGs we
 | GitHub Actions maintained by `actions` | Commit-pinned in `ci.yml` | External CI tooling for checkout, Node/Python setup and failure artifacts, under each action's upstream license. Their implementation is not copied into the application. |
 
 `package-lock.json` records exact dependency versions, integrity hashes and licenses. Package licenses/notices remain in installed packages. The application and generated standalone HTML do not import Playwright, load it from a CDN or need it to run. The authored tests and hardening/refactoring code are MIT application-project source. Adding this test tooling does not change the application license or vendor external code into the application.
+
+The 0.9.2 step-review screen, shared tool guidance, startup indicator and cross-platform executable discovery were authored for this project under MIT using existing browser/Node APIs. No dependency or external launcher/portal implementation was copied. External installation documentation informed discovery paths; it is a reference, not bundled code.

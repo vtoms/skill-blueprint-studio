@@ -4,7 +4,7 @@
 
 Prompt drafting uses a separately installed native Claude Code CLI version 2.1.299 or later. Sign in with `claude auth login` as the same operating-system user running the Studio server. The application uses that CLI's configured account and its effective default model, unless `STUDIO_CLAUDE_MODEL` selects a model or alias. Provider usage limits and account billing apply.
 
-On Windows, the application checks the usual native executable location under the current user profile, then `claude.exe` on PATH. On other systems it uses `claude` on PATH. Set `STUDIO_CLAUDE_PATH` to a native executable path when necessary. No shell is used to construct a command from the user prompt.
+An explicit `STUDIO_CLAUDE_PATH` takes priority. On Windows, Studio checks the native executable under the current user profile, PATH directories, and the native binary in the npm installation under `node_modules/@anthropic-ai/claude-code/bin/claude.exe`, including the usual application-data npm directory. It executes the binary directly rather than a `claude.cmd` shell shim. On Mac/Linux, Studio checks PATH and the native user installation at `~/.local/bin/claude`. See [Anthropic’s installation guidance](https://support.claude.com/en/articles/14554922-claude-code-user-faq) for PATH setup. No shell is used to construct a command from the user prompt.
 
 There is no npm package dependency for this integration and no API key stored in the application. Claude Code's source and executable are not included in the repository. Its use is governed by [Anthropic's terms](https://github.com/anthropics/claude-code/blob/main/LICENSE.md), independently of this application's MIT license.
 
@@ -15,7 +15,7 @@ There is no npm package dependency for this integration and no API key stored in
 3. Choose **Generate draft**. The local server asks Claude for a structured blueprint. Generation can take a few minutes. Cancel stops the request; it does not create a skill.
 4. Review the brief, step input/output contracts, inside-item counts, assumptions, open questions and proposed scenarios. Nothing is added until **Add draft & open editor**. **Change description** retains the request so you can improve it first.
 5. In the editor, use **Review draft decisions** to answer open questions and confirm that assumptions have been reviewed and needed corrections applied. Confirmed answers are included as shared values in the exported Markdown.
-6. Review and confirm each proposed step separately. Edit its contract, inside items, examples, references and resources using Step by step, List or Canvas. All views edit the same saved skill.
+6. Review each proposed step. Confirm steps individually or use **Steps → Review unconfirmed steps** to read and confirm selected steps together. Edit its contract, inside items, examples, references and resources using Step by step, List or Canvas. All views edit the same saved skill.
 7. Inspect the **Test scenarios** and adjust expected results. Export the ZIP when required checks pass, run it in Claude, and record actual observations against the appropriate revision.
 
 **Start blank** remains available for manual authoring, including when Claude Code is unavailable. Direct standalone-file use offers a memory-only preview and cannot call the drafting engine.

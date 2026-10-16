@@ -13,7 +13,7 @@ test('drafting uses bounded tool-free CLI arguments and forwards only submitted 
  const status=await engine.status();assert.equal(status.ready,true);assert.equal(status.email,undefined);const draft=await engine.generate({prompt:'Review supplied records against the fields I specify.'});assert.equal(draft.generation.model,'example-model');assert.deepEqual(JSON.parse(calls[0].options.input),{request:'Review supplied records against the fields I specify.',preferredTitle:''});const args=calls[0].args;assert.equal(args[args.indexOf('--tools')+1],'');for(const flag of ['--safe-mode','--restricted','--no-session-persistence','--strict-mcp-config','--disable-slash-commands'])assert.ok(args.includes(flag));assert.deepEqual(await readdir(dataDirectory),[]);
 });
 test('missing or outdated CLI and incomplete model output cannot create a pretend draft',async t=>{
- const {engine}=await runtime(t,async()=>{const error=new Error('missing');error.code='ENOENT';throw error;});assert.equal((await engine.status()).ready,false);await assert.rejects(engine.generate({prompt:'Draft a record review skill.'}),/not installed/);
+ const {engine}=await runtime(t,async()=>{const error=new Error('missing');error.code='ENOENT';throw error;});assert.equal((await engine.status()).ready,false);await assert.rejects(engine.generate({prompt:'Draft a record review skill.'}),/could not be found/);
  const old=await runtime(t,async()=> '2.0.999');assert.equal((await old.engine.status()).ready,false);
  const incomplete=await runtime(t,async(executable,args)=>args[0]==='--print'?JSON.stringify({is_error:true}):readyRun(executable,args));await assert.rejects(incomplete.engine.generate({prompt:'Draft a record review skill.'}),/complete structured draft/);
 });

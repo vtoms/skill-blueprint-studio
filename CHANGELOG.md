@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.2 — 2026-10-16
+
+- Explain the independent import-review path for solo users: a separate fresh AI session may review the packet; self-confirmation still cannot replace independent evidence.
+- Add a combined step-review screen with full contracts, inside items, source mappings, selection, an explicit reading confirmation and undo. Incomplete steps and other review gates remain separate.
+- Share plain-text connection and operation guidance between inline editing and the legacy facet dialog, including where to ask for configured identifiers.
+- Discover Windows npm-installed native Claude executables without executing command shims, and add the native user-bin fallback on Mac/Linux. Clarify detection failures and preserve explicit configuration.
+- Show startup/database loading feedback, print progress before opening the database, and explain port conflicts without a misleading ready message. Test browser startup success/failure and duplicate-server handling.
+- Update contributor/platform guidance and acceptance-testing limits. No dependency, database schema, review-policy version or license change.
+
 ## 0.9.1 — 2026-10-15
 
 - Verify signed and unsigned ZIP32 data descriptors, local streaming metadata and complete entry ranges. Reject missing, truncated and inconsistent descriptors, malformed extra fields and unsupported ZIP64 metadata.

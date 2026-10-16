@@ -141,3 +141,5 @@ The application is licensed under [MIT](LICENSE). See [the provenance and runtim
 ## Development and validation
 
 Run `npm test` for the workflow, review, database, persistence, and HTTP tests. Run `npm run test:analyzer` for Python analyzer tests (`python3` may be required on some systems). Set `STUDIO_PYTHON` before running `npm test` when Python is not on PATH. `npm run db:template` regenerates only the empty database template; ordinary builds never touch the working database. See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and the [changelog](CHANGELOG.md).
+
+For solo import review, combined step confirmation, administrator-provided tool identifiers, startup behavior and runtime acceptance criteria, see [consultant checks and platform integration](docs/CONSULTANT_CHECKS.md).

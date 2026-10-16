@@ -15,6 +15,7 @@ const port=Number(process.env.STUDIO_PORT||8766);
 if(!Number.isInteger(port)||port<1||port>65535)throw new Error('STUDIO_PORT must be between 1 and 65535.');
 const python=process.env.STUDIO_PYTHON||(process.platform==='win32'?'python':'python3');
 const dataDirectory=resolve(process.env.STUDIO_DATA_DIR||resolve(root,'../.local-data'));
+console.log('Starting Skill Blueprint Studio… Opening the local database.');
 const workspaceDatabase=openWorkspaceDatabase(resolve(dataDirectory,'workspace.sqlite'),{template:resolve(root,'seed/workspace.sqlite')});
 const drafting=createClaudeDrafting({dataDirectory});
 
@@ -67,6 +68,6 @@ const server=createServer({requestTimeout:30000,headersTimeout:10000},async(req,
   res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.md':'text/markdown; charset=utf-8','.json':'application/json; charset=utf-8','.zip':'application/zip'}[extname(path)]||'application/octet-stream'),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
   res.end(content);
  }catch{res.writeHead(404);res.end('Not found');}
-}).listen(port,'127.0.0.1',()=>console.log('Skill Blueprint Studio: http://127.0.0.1:'+port+'\nProjects: '+workspaceDatabase.path));
+}).listen(port,'127.0.0.1',()=>console.log('Skill Blueprint Studio: http://127.0.0.1:'+port+'\nProjects: '+workspaceDatabase.path)).on('error',error=>{workspaceDatabase.close();console.error(error.code==='EADDRINUSE'?'Port '+port+' is already in use. If Studio is already running, use its existing browser tab. Otherwise choose another STUDIO_PORT.':'Studio could not start: '+error.message);process.exitCode=1;});
 function shutdown(){server.close(()=>{workspaceDatabase.close();process.exit(0);});}
 process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);

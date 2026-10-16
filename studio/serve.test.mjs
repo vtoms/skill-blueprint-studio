@@ -19,18 +19,21 @@ test('local server serves the app, persists projects, rejects stale writes, and 
  try{
   await new Promise((resolve,reject)=>{
    const timeout=setTimeout(()=>reject(new Error('Server did not start: '+errors)),10000);
-   server.stdout.once('data',()=>{clearTimeout(timeout);resolve();});
+   let startupOutput='';server.stdout.on('data',data=>{startupOutput+=data;if(startupOutput.includes('Skill Blueprint Studio: http://127.0.0.1:')){clearTimeout(timeout);resolve();}});
    server.once('error',error=>{clearTimeout(timeout);reject(error);});
    server.once('exit',code=>{clearTimeout(timeout);reject(new Error('Server exited: '+code+' '+errors));});
   });
   const base='http://127.0.0.1:'+port;
+  const duplicate=spawn(process.execPath,[fileURLToPath(new URL('./serve.mjs',import.meta.url))],{env:{...process.env,STUDIO_PORT:String(port),STUDIO_DATA_DIR:join(dataDirectory,'duplicate'),STUDIO_CLAUDE_PATH:'missing-test-drafting-cli'},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  let duplicateOutput='',duplicateError='';duplicate.stdout.on('data',data=>duplicateOutput+=data);duplicate.stderr.on('data',data=>duplicateError+=data);
+  const duplicateExit=await once(duplicate,'exit');assert.equal(duplicateExit[0],1);assert.match(duplicateOutput,/Starting Skill Blueprint Studio/);assert.doesNotMatch(duplicateOutput,/Skill Blueprint Studio: http/);assert.match(duplicateError,/already in use.*existing browser tab/);
   const app=await fetch(base);assert.equal(app.status,200);const html=await app.text();assert.match(html,/<h1 id="project-title">Projects<\/h1>/);assert.match(html,/<title>Skill Blueprint Studio<\/title>/);
   const state=await (await fetch(base+'/api/workspace')).json();assert.deepEqual(state.workspace.projects,[]);assert.equal(state.storage.engine,'SQLite');addWorkspaceProject(state.workspace,createWorkspaceProject('Saved collection'));
   const put=()=>fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify({revision:state.revision,workspace:state.workspace})});
   assert.equal((await put()).status,200);assert.equal((await put()).status,409);assert.equal((await (await fetch(base+'/api/workspace')).json()).workspace.projects[0].name,'Saved collection');
   assert.equal((await fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:'{}'})).status,403);
   assert.equal((await fetch(base+'/api/workspace',{method:'PUT',headers:{'Content-Type':'text/plain'},body:'{}'})).status,400);
-  const drafting=await (await fetch(base+'/api/skill-draft')).json();assert.equal(drafting.ready,false);assert.match(drafting.message,/not installed/);
+  const drafting=await (await fetch(base+'/api/skill-draft')).json();assert.equal(drafting.ready,false);assert.match(drafting.message,/could not be found/);
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:'short'})})).status,400);
   assert.equal((await fetch(base+'/api/skill-draft',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.com'},body:JSON.stringify({prompt:'Create a record review skill.'})})).status,403);
   assert.equal((await fetch(base+'/api/skill-optimize')).status,405);

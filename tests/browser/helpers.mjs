@@ -28,7 +28,7 @@ export async function startTestServer(t){
  let errors='';child.stderr.on('data',data=>errors+=data);
  await new Promise((resolve,reject)=>{
   const timeout=setTimeout(()=>reject(new Error('Test server did not start: '+errors)),10000);
-  child.stdout.once('data',()=>{clearTimeout(timeout);resolve();});
+  let startupOutput='';child.stdout.on('data',data=>{startupOutput+=data;if(startupOutput.includes('Skill Blueprint Studio: http://127.0.0.1:')){clearTimeout(timeout);resolve();}});
   child.once('error',error=>{clearTimeout(timeout);reject(error);});child.once('exit',code=>{clearTimeout(timeout);reject(new Error('Test server exited '+code+': '+errors));});
  });
  const base='http://127.0.0.1:'+port;
