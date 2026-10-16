@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankProject,sourceBytes,readProject,validate,copy} from './core.mjs';
 import {importReferenceSources} from './reference-import.mjs';
-import {restoreAttachment,originalActionsMarkup,originalDescription,originalUse} from './attachments.mjs';
+import {restoreAttachment,originalActionsMarkup,originalDescription,originalUse,originalTitle} from './attachments.mjs';
 import {isImportedSkill,needsIndependentReview,independentReviewState,reviewSnapshot,reviewReason} from './independent-review.mjs';
 import {syntheticReviewForGateTestsOnly} from './review-test-support.mjs';
 import {optimizationSource,optimizationProposal} from './optimization-test-support.mjs';
@@ -44,7 +44,7 @@ test('historical Markdown sources distinguish active identity from occupied path
  const skill=blankProject(),file=text=>({name:'guide.md',bytes:new TextEncoder().encode(text)}),button=(label,action,extra)=>`<button data-action="${action}" ${extra}>${label}</button>`;
  importReferenceSources(skill,[file('Version one')]);skill.references=[];skill.references.push({id:'authored',path:'references/guide.md',content:'Authored replacement.'});
  assert.equal(originalUse(skill,skill.originals[0]).active,false);assert.equal(originalUse(skill,skill.originals[0]).pathOccupied,true);assert.match(originalActionsMarkup(skill,skill.originals[0],button,String),/Path in use/);assert.throws(()=>restoreAttachment(skill,skill.originals[0].path),/Rename or remove/);
- skill.references=[];importReferenceSources(skill,[file('Version two')]);assert.equal(originalUse(skill,skill.originals[0]).active,false);assert.equal(originalUse(skill,skill.originals[1]).active,true);assert.doesNotMatch(originalActionsMarkup(skill,skill.originals[0],button,String),/>In skill</);
+ skill.references=[];importReferenceSources(skill,[file('Version two')]);assert.equal(originalUse(skill,skill.originals[0]).active,false);assert.equal(originalUse(skill,skill.originals[1]).active,true);assert.doesNotMatch(originalActionsMarkup(skill,skill.originals[0],button,String),/>In skill</);assert.equal(originalTitle(skill,skill.originals[1]),'references/guide.md · Imported source 2 of 2');assert.doesNotMatch(originalTitle(skill,skill.originals[1]),/reference-imports|id-/);
  assert.match(originalDescription({path:'references/legacy.md',content:'é\r\n'}),/^4 bytes · Markdown$/);assert.match(originalDescription({path:'assets/missing.csv',encoding:'unavailable',content:''}),/^Original bytes unavailable/);
  const named=blankProject();importReferenceSources(named,[{name:'SKILL.md',bytes:new TextEncoder().encode('Reference instructions.')}]);assert.equal(isImportedSkill(named),false);assert.equal(needsIndependentReview(named),true);assert.equal(named.sourceOrigin,'authored');
 });

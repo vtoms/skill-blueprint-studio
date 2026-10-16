@@ -86,6 +86,24 @@ body{font-size:14px;line-height:1.55;background:var(--bg)}h1{font-size:28px;lett
 .toast{left:auto;right:20px;bottom:18px;transform:none;max-width:min(410px,calc(100% - 40px));pointer-events:none;padding:9px 13px}
 .workspace .inspector-body{padding-bottom:max(96px,var(--toast-clearance,0px));scroll-padding-bottom:max(96px,var(--toast-clearance,0px))}
 .chapter-footer{padding-bottom:var(--toast-clearance,0px)}
+.mobile-list-label{display:none}
+.diagram-overview .diagram-boundary>strong{display:none}
+.diagram-overview .diagram-boundary>span{font-size:24px}
+@media(max-width:640px){
+ .workflow-table{display:block;min-width:0}
+ .workflow-table thead{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap}
+ .workflow-table tbody{display:grid;gap:12px}
+ .workflow-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:14px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+ .workflow-table tbody tr.selected{background:var(--soft)}
+ .workflow-table td{display:block;min-width:0;padding:0;border:0}
+ .workflow-table td:nth-child(1){grid-column:1;grid-row:1}
+ .workflow-table td:nth-child(4){grid-column:2;grid-row:1}
+ .workflow-table td:nth-child(2),.workflow-table td:nth-child(3){grid-column:1/-1}
+ .workflow-table .step-order{flex-direction:row}
+ .mobile-list-label{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-bottom:4px}
+ .view-guided .step-rail{max-height:60dvh}
+}
+@media(min-width:1101px){body:has(.workspace.view-flow) .toast{left:220px;right:auto;max-width:min(410px,calc(100vw - 660px))}}
 .step-order .button{min-width:38px;min-height:38px;border:1px solid var(--control-line);background:var(--panel)}
 .step-order .button:disabled{opacity:.4}.mobile-process-switch{display:none}
 .diagram-jump{min-width:120px;flex:1;max-width:300px}.diagram-jump select{width:100%;min-height:36px;padding:6px 9px;border:1px solid var(--control-line);border-radius:6px;background:var(--panel);color:var(--ink)}

@@ -25,6 +25,11 @@ export function originalDescription(original){
  return (original.encoding==='unavailable'?'Original bytes unavailable':size===null?'Original size unavailable':size+' bytes')+' · '+(original.kind||resourceKind(original.path));
 }
 
+export function originalTitle(skill,original){
+ const path=original.referencePath||original.path,versions=skill.originals.filter(source=>(source.referencePath||source.path)===path);
+ return path+(versions.length>1?' · Imported source '+(versions.indexOf(original)+1)+' of '+versions.length:'');
+}
+
 export function attachmentUses(skill,id){
  const resource=skill.resources.find(item=>item.id===id);
  if(!resource)throw new Error('That supporting file is no longer attached.');

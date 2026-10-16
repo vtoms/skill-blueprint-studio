@@ -8,6 +8,7 @@
 - Preserve standalone imported Markdown bytes and provenance, including BOM/CRLF, edited/renamed references and repeated filenames. Require independent review for active imported references and inherited baselines; retain unused source history without relabeling an authored skill as imported.
 - Show state-specific package guidance and preparation progress; reconcile inside-item counts and singular chapter counts. Remove dead dialog branches and an unused helper.
 - Distinguish active source versions from occupied paths, show accurate legacy source sizes, retain mobile Back controls and scroll clearance for notices, and avoid insertion buttons over shapes. Clarify source associations during improvement.
+- Fit List rows and order controls on phones; simplify overview terminals, label original source versions clearly and tailor supporting-file explanations. Dismiss an earlier success toast when a persistent error follows.
 - Add geometry, reference lifecycle, review and touch/mobile regressions. No runtime dependency, SQLite schema/template, MIT license or review-policy version change.
 
 ## 0.10.0 — 2026-10-16
