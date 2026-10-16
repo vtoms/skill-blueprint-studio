@@ -43,6 +43,8 @@ These limits reduce resource exhaustion but are not a portable OS-level CPU/memo
 | `skill-validation.mjs` | Structural/package readiness and dependency checks |
 | `skill-compiler.mjs` | Markdown/package generation |
 | `skill-import.mjs` | Frontmatter, source parsing and workflow reconstruction |
+| `reference-import.mjs` | Atomic standalone Markdown import and preserved source associations |
+| `attachments.mjs` | Detach/restore, original-source identity, metadata and shared recovery actions |
 | `skill-reader.mjs` | Backup/model parsing and metadata validation |
 | `http-request.mjs` | Shared local-request, JSON and HTTP error handling |
 | `source-analysis.mjs` | Analysis validation, capacity reservation and worker invocation |
