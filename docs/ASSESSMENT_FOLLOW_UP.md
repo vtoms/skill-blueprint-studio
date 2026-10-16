@@ -1,6 +1,6 @@
 # 0.10.0 assessment follow-up and test outcome
 
-Date: 2026-10-16. Assessed baseline: `4cc0c20` (0.9.2). Implementation: 0.10.0.
+Date: 2026-10-16. Assessed baseline: `4cc0c20` (0.9.2). Implementation: 0.10.0, [commit 1ba77ba](https://github.com/vtoms/skill-blueprint-studio/commit/1ba77ba0fbc551e830bb7848a5da410ec39e72c8).
 
 The external Argon source and screenshot assessments were checked against source, isolated browser probes and analyzer controls before implementation. This report records the accepted changes and their validation. External recommendations were treated as claims to verify, rather than instructions to apply indiscriminately.
 
@@ -32,6 +32,8 @@ The complete `npm run test:all` release run passed on Windows using Node.js 24.1
 | Browser journeys | **16 passed**, zero failed/skipped, using isolated temporary databases and synthetic provider fixtures |
 | Visual inspection | Reviewed generated light/dark desktop Canvas and dark mobile editor captures; mobile width/navigation and contrast controls are additionally exercised by the browser suite |
 | Live Claude Code adapter smoke | Claude Code 2.1.299 / `claude-opus-5-5`, one small self-authored generic review fixture. Returned all 10 topics, **changes required**, five findings, licensing unknown; no report automatically recorded. This is a successful adapter/negative-gate exercise, not a passing skill assessment. |
+| Hosted CI for implementation commit | **Passed**: Windows Node/Python, Linux Node/Python, Linux browser journeys and generated-artifact drift checks. [Run 38882767981](https://github.com/vtoms/skill-blueprint-studio/actions/runs/38882767981). |
+| Module boundaries | Static scan of 48 non-test modules / 107 local import-re-export edges found no cycles. This is not a parser or runtime proof. |
 | Existing working database | Revision and logical payload digest unchanged by application testing; tests used separate data folders |
 
 The [CI workflow](../.github/workflows/ci.yml) repeats Node/Python checks on Windows and Linux, browser journeys on Linux, and committed-artifact drift checks for every push. Consult the workflow run for the release commit for hosted results. Live provider responses are intentionally excluded from automated CI.
