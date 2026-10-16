@@ -28,6 +28,8 @@ import {reviewSnapshot,reviewDigest} from './independent-review.mjs';
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const contextHelp=createContextHelp({topics:HELP_TOPICS});
+function syncToastClearance(){const toast=$('#toast');document.documentElement.style.setProperty('--toast-clearance',toast.hidden?'0px':Math.ceil(toast.getBoundingClientRect().height+32)+'px');}
+const studioToastObserver=new ResizeObserver(syncToastClearance);studioToastObserver.observe($('#toast'));
 let fieldSequence=0;
 let workspace=emptyWorkspace(),project=null,activeProjectId='',storageReady=false,recoveryText='';
 let storageStatus='loading',storageMessage='',browserMigration=null,browserDigest='';

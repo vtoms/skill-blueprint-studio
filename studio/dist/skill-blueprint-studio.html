@@ -86,7 +86,8 @@ body{font-size:14px;line-height:1.55;background:var(--bg)}h1{font-size:28px;lett
 .continue-skill{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;margin-bottom:24px;border:1px solid var(--control-line);border-radius:12px;background:var(--panel)}
 .continue-skill>div{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
 .toast{left:auto;right:20px;bottom:18px;transform:none;max-width:min(410px,calc(100% - 40px));pointer-events:none;padding:9px 13px}
-.workspace .inspector-body{padding-bottom:96px;scroll-padding-bottom:96px}
+.workspace .inspector-body{padding-bottom:max(96px,var(--toast-clearance,0px));scroll-padding-bottom:max(96px,var(--toast-clearance,0px))}
+.chapter-footer{padding-bottom:var(--toast-clearance,0px)}
 .step-order .button{min-width:38px;min-height:38px;border:1px solid var(--control-line);background:var(--panel)}
 .step-order .button:disabled{opacity:.4}.mobile-process-switch{display:none}
 .diagram-jump{min-width:120px;flex:1;max-width:300px}.diagram-jump select{width:100%;min-height:36px;padding:6px 9px;border:1px solid var(--control-line);border-radius:6px;background:var(--panel);color:var(--ink)}
@@ -1361,6 +1362,8 @@ function createWorkspacePersistence({request=globalThis.fetch?.bind(globalThis),
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const contextHelp=createContextHelp({topics:HELP_TOPICS});
+function syncToastClearance(){const toast=$('#toast');document.documentElement.style.setProperty('--toast-clearance',toast.hidden?'0px':Math.ceil(toast.getBoundingClientRect().height+32)+'px');}
+const studioToastObserver=new ResizeObserver(syncToastClearance);studioToastObserver.observe($('#toast'));
 let fieldSequence=0;
 let workspace=emptyWorkspace(),project=null,activeProjectId='',storageReady=false,recoveryText='';
 let storageStatus='loading',storageMessage='',browserMigration=null,browserDigest='';
