@@ -149,4 +149,6 @@ For solo import review, combined step confirmation, administrator-provided tool 
 
 ## Assessment follow-up
 
-The [0.10.0 implementation and validation report](docs/ASSESSMENT_FOLLOW_UP.md) maps the verified architecture/UI assessment to shipped changes, regression evidence and remaining acceptance checks. It distinguishes application tests from testing a generated skill on its target platform.
+The [implementation and validation report](docs/ASSESSMENT_FOLLOW_UP.md) maps the verified architecture/UI assessment to shipped changes, regression evidence and remaining acceptance checks. It distinguishes application tests from testing a generated skill on its target platform.
+
+Standalone `.md` reference imports retain their exact originals and require independent review while active. Edits and renames keep that source association. Removed files can be restored from **Rules & files → Original source** or the package's original-file dialog. Restore recovers original content; use Undo or a backup to recover later edits. See [storage and provenance](docs/STORAGE.md).

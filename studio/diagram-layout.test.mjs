@@ -1,13 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankProject,newStep,readProject,copy} from './core.mjs';
-import {autoDiagramPositions,diagramPositions,reconcileDiagramLayout,diagramGeometry,diagramConnector} from './diagram-layout.mjs';
+import {autoDiagramPositions,diagramPositions,reconcileDiagramLayout,diagramGeometry,diagramConnector,diagramHandoff} from './diagram-layout.mjs';
 import {reviewSnapshot,independentReviewState} from './independent-review.mjs';
 import {syntheticReviewForGateTestsOnly} from './review-test-support.mjs';
 import {optimizationSource,optimizationProposal} from './optimization-test-support.mjs';
 import {skillFromOptimization} from './skill-optimization.mjs';
 
 function diagramSkill(){const skill=blankProject('Example process');skill.steps=['Collect','Review','Summarize','Present'].map(newStep);return skill;}
+test('handoff labels stay outside shapes in normal and reverse layouts; START prefers an upper lane',()=>{
+ const skill=diagramSkill();
+ for(const positions of [autoDiagramPositions(skill.steps),skill.steps.map((step,index)=>({stepId:step.id,x:72,y:160+(3-index)*220}))]){
+  const graph=diagramGeometry(skill,positions),obstacles=[graph.start,...graph.nodes,graph.end];
+  assert.ok(graph.start.y<graph.nodes[0].y);
+  for(const edge of graph.edges){const point=diagramHandoff(edge,obstacles);if(!point.label)continue;const rect={x:point.x+point.label.x,y:point.y+point.label.y,width:point.label.width,height:24};assert.ok(obstacles.every(node=>rect.x>=node.x+node.width||rect.x+rect.width<=node.x||rect.y>=node.y+node.height||rect.y+rect.height<=node.y));}
+ }
+});
 test('start and finish boundaries avoid shapes after reverse spatial arrangement',()=>{
  const skill=diagramSkill(),positions=skill.steps.map((step,index)=>({stepId:step.id,x:72,y:160+(3-index)*220})),graph=diagramGeometry(skill,positions);
  const overlap=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;

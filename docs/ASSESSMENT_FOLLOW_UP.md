@@ -1,3 +1,30 @@
+# 0.10.1 alignment follow-up
+
+Date: 2026-10-16. Reviewed baseline: `d36d6dd` (0.10.0). The second Argon assessment found the core aligned; independent reproduction confirmed the targeted follow-up below. The source and visual assessments were advisory: the reviewer did not execute the application or certify real target-system behavior.
+
+| Verified finding | Implemented correction | Evidence |
+|---|---|---|
+| Canvas labels covered card contracts | Bound and position labels in free space; hide only a decorative label when a custom arrangement leaves no safe space. Full handoffs remain in nodes/editor. | Geometry controls and real DOM rectangle intersections at full scale. |
+| Overview titles were squeezed by invisible rows | Remove hidden contract/status rows from layout; reserve space for two title lines. | Browser checks actual title height against line height for 20 shapes. |
+| Mobile Canvas was mostly below the viewport | Compact repeated chrome and bring the workbench into view when changing views/panes. Keep zoom, fit, focus, pan and help accessible. | Touch-enabled 390×844 browser measures at least 300 visible diagram pixels on view entry. |
+| Mobile switches did nothing in Guided/List | Apply the same overview/editor pane state in all three views. | Visibility assertions for both panes in Guided, List and Canvas. |
+| Restore existed in only one source presentation | Both source entry points share eligibility/actions, including Markdown restoration. Restoring Markdown stays in its editor rather than running asset analysis. | Domain and real import/edit/rename/remove/restore journeys. |
+| Inside counts and preparation guidance differed | Count bound files with inside items, fix singular chapter counts, clarify management links, and show actual preparation state and next action. | Count/guidance controls and existing review/export journeys. |
+| Duplicate unreachable dialog branches and unused helper | Remove them; preserve real handlers, review-step focus and engine checks. | Bundle syntax/freshness and full browser regressions. |
+| Removing a category's final file left an empty filter | Allow populated-category selection again after that removal. | Existing attachment lifecycle and source inspection; deliberate manual empty-category browsing remains supported. |
+| START could be placed below the first step | Prefer a free upper or side lane before falling back to collision displacement. | Normal/reverse geometry controls preserve order and avoid shape overlap. |
+| Standalone Markdown had no retained original/review association | Preserve exact UTF-8 bytes, source association across edits/renames, distinct history on repeated imports, atomic selection rejection and restore. Gate active external references and inherited baselines; block missing associated originals. | BOM/CRLF byte comparisons; malformed/duplicate selection controls; stale report, backup, source history and derived-version tests; actual UI import/restoration. |
+
+The full local release run passed **115 Node tests, 12 Python analyzer tests and 18 browser journeys** (145 total), with no failures or skipped tests. Browser fixtures use temporary databases and synthetic provider responses. The new lifecycle journey exposed an unintended asset-analysis redirect after restoring Markdown; this was corrected before the passing run. A pre-existing journey assertion also caught removal of the explicit runtime-testing limitation; that visible message was restored. These development failures are not counted as passes. Subsequent copy-only refinements receive focused checks before review.
+
+The standalone bundle was regenerated. Node/Python baseline, Playwright lockfile versions, SQLite physical schema/template and review-policy version are unchanged. No third-party implementation or runtime package was added; the new code remains MIT. Known-authored skills stay authored when attaching external references. Old references whose bytes were never retained need re-import; provenance is not invented retrospectively.
+
+Independent Gemini 4 Argon source/image re-review and hosted CI results will be recorded here after the candidate is assessed. This statement does not claim those pending checks passed.
+
+On another computer: back up work, preserve its private branch/custom launcher, merge the public update, rebuild and restart against the existing database. Retest launcher discovery, private tool hints in both editor paths, both themes, Canvas, Improve, backups and the review flow. An exported skill still needs its exact revision tested through authorized real connections to final output and failure cases. Do not replace a working database with the empty template or publish private rules/test data.
+
+---
+
 # 0.10.0 assessment follow-up and test outcome
 
 Date: 2026-10-16. Assessed baseline: `4cc0c20` (0.9.2). Initial implementation: 0.10.0, [commit 1ba77ba](https://github.com/vtoms/skill-blueprint-studio/commit/1ba77ba0fbc551e830bb7848a5da410ec39e72c8).

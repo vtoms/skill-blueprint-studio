@@ -17,7 +17,15 @@ export function diagramGeometry(skill,positions=diagramPositions(skill)){
  const overlaps=(a,b)=>a.x<b.x+b.width+20&&a.x+a.width+20>b.x&&a.y<b.y+b.height+20&&a.y+a.height+20>b.y;
  // Boundary positions follow the first/last step but never cover another
  // shape after a user rearranges the canvas. Execution order is unchanged.
- for(const boundary of [start,end])for(let attempt=0;attempt<1002&&[...nodes,...(boundary===end?[start]:[])].some(node=>overlaps(boundary,node));attempt++)boundary.y+=DIAGRAM_STEP_SIZE.height+60;
+ for(const boundary of [start,end]){
+  const obstacles=[...nodes,...(boundary===end?[start]:[])];
+  if(boundary===start&&obstacles.some(node=>overlaps(boundary,node))){
+   const candidates=[{x:start.x,y:16},{x:Math.max(...nodes.map(node=>node.x+node.width))+40,y:Math.max(16,first.y-128)}];
+   const free=candidates.find(position=>!obstacles.some(node=>overlaps({...start,...position},node)));
+   if(free)Object.assign(start,free);
+  }
+  for(let attempt=0;attempt<1002&&obstacles.some(node=>overlaps(boundary,node));attempt++)boundary.y+=DIAGRAM_STEP_SIZE.height+60;
+ }
  const all=[start,...nodes,end],bounds={left:Math.max(0,Math.min(...all.map(node=>node.x))-40),top:Math.max(0,Math.min(...all.map(node=>node.y))-24),right:Math.max(...all.map(node=>node.x+node.width))+40,bottom:Math.max(...all.map(node=>node.y+node.height))+40};
  return {nodes,start,end,bounds,edges:all.slice(0,-1).map((node,index)=>({from:node,to:all[index+1],index}))};
 }
@@ -26,4 +34,15 @@ export function diagramConnector(from,to){
  if(Math.abs(dx)>Math.abs(dy)*1.1){const forward=dx>=0;start={x:from.x+(forward?from.width:0),y:from.y+from.height/2};end={x:to.x+(forward?0:to.width),y:to.y+to.height/2};const middle=(start.x+end.x)/2;path=`M ${start.x} ${start.y} H ${middle} V ${end.y} H ${end.x}`;midpoint={x:middle,y:(start.y+end.y)/2};}
  else{const forward=dy>=0;start={x:from.x+from.width/2,y:from.y+(forward?from.height:0)};end={x:to.x+to.width/2,y:to.y+(forward?0:to.height)};const middle=(start.y+end.y)/2;path=`M ${start.x} ${start.y} V ${middle} H ${end.x} V ${end.y}`;midpoint={x:(start.x+end.x)/2,y:middle};}
  return {path,start,end,midpoint};
+}
+
+export function diagramHandoff(edge,obstacles){
+ const point=diagramConnector(edge.from,edge.to).midpoint,height=24;
+ const horizontal=Math.abs(edge.to.x-edge.from.x)>Math.abs(edge.to.y-edge.from.y)*1.1;
+ const gap=horizontal?Math.max(edge.from.x,edge.to.x)-Math.min(edge.from.x+edge.from.width,edge.to.x+edge.to.width):180;
+ const width=Math.min(180,Math.max(48,gap-16));
+ const candidates=[{x:point.x-width/2,y:point.y+20},{x:point.x-width/2,y:point.y-height-20},{x:point.x+22,y:point.y-height/2},{x:point.x-width-22,y:point.y-height/2}];
+ const label=candidates.find(rect=>rect.x>=0&&rect.y>=0&&!obstacles.some(node=>rect.x<node.x+node.width+4&&rect.x+width+4>node.x&&rect.y<node.y+node.height+4&&rect.y+height+4>node.y));
+ // A custom layout can leave no room. The node/editor still show the contract.
+ return {...point,label:label?{x:label.x-point.x,y:label.y-point.y,width}:null};
 }

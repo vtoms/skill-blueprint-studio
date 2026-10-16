@@ -69,3 +69,11 @@ Supporting files initially opens a populated category. Inside-step counts includ
 Projects remains the starting page, with Continue editing for the most recently edited skill. Repeated Restore navigation and Canvas run-order controls were removed. Optional keyboard explanations live behind the Canvas info button. Layout changes remain independent of semantic changes. Notifications do not capture pointer events; reordering controls have larger targets; required errors remain persistent. Mobile process chrome omits duplicate navigation and purpose text already available through breadcrumbs/Brief.
 
 Typing coalesces stage/controller rebuilds after 180 ms while preserving the active editor. Chapter status uses the same validation result for that refresh. Autosave defers workspace serialization until its 200 ms debounce/explicit flush, and preserves in-flight snapshots, conflict protection and retry state. Undo still retains independent copies of source history; originals are not shared across undo snapshots.
+
+## Canvas and reference follow-up (0.10.1)
+
+Handoff labels occupy free space between shapes and shorten with an ellipsis when necessary; full input/output names remain available in the node/editor. If a custom arrangement leaves no safe position, the decorative label is omitted. This is not full obstacle routing. Below 45% zoom, contract/status rows leave the layout so one- and two-line titles retain their space. START prefers an upper or side lane when its usual position is occupied.
+
+At small widths all three views share the same Process overview / Edit selected step choice. Choosing a view brings its workbench into view; choosing a shape opens its editor. Projects, the section picker and other chapters remain available by scrolling up. Zoom, fit, focus and pan buttons remain available; touch dragging and the ordered outline remain alternatives. Counts include the bound files shown under Inside.
+
+Original source and the package source dialog offer the same Use in skill action. Restoring a Markdown original returns to Reference documents; restoring a supporting asset returns to its file category. Restores do not recover old edits or bindings; Undo or an intact backup does. Package preparation distinguishes local checks, required independent review and download/external testing, with the actual next action stated visibly.

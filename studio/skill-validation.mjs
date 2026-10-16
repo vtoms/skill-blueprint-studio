@@ -61,6 +61,7 @@ export function validate(project) {
   }
   const paths=new Set();
   for(const ref of project.references) {
+    if(ref.sourcePath&&(!safePath(ref.sourcePath)||!project.originals.some(source=>source.path===ref.sourcePath&&source.encoding!=='unavailable')))add('The imported reference source is unavailable: '+ref.path,null,'references');
     if(!safePath(ref.path)||!ref.path.endsWith('.md'))add('Reference paths must be relative Markdown paths.',null,'references');
     if(ref.path==='SKILL.md'||Object.values(PATHS).includes(ref.path)||ref.path===RESOURCE_INDEX)add(`Rename ${ref.path}; this path is used by the compiler.`,null,'references');
     if(paths.has(ref.path))add(`Duplicate reference path: ${ref.path}`,null,'references');paths.add(ref.path);

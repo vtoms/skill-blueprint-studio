@@ -1,10 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankProject,newStep} from './core.mjs';
-import {SKILL_CHAPTERS,HELP_TOPICS,chapterStates} from './ux-content.mjs';
+import {SKILL_CHAPTERS,HELP_TOPICS,chapterStates,packagePreparation} from './ux-content.mjs';
 import {briefChapterMarkup,improveChapterMarkup,rulesFilesMarkup,testsChapterMarkup} from './chapter-view.mjs';
 import {workflowInspectorMarkup} from './workflow-view.mjs';
 import {workflowDiagramMarkup} from './diagram-view.mjs';
+
+test('chapter counts use singular nouns and package guidance distinguishes local work from external review',()=>{
+ const skill=blankProject();skill.steps=[newStep('Read')];skill.screens.input=[{id:'input',label:'Request',options:[]}];skill.screens.output=['Result'];
+ const checks={errors:[]},states=chapterStates(skill,checks);assert.equal(states.workflow,'1 step');assert.equal(states.screens,'1 field · 1 column');
+ let preparation=packagePreparation(skill,checks);assert.equal(preparation.stages[2].status,'current');assert.match(preparation.next,/test it in Claude/);
+ skill.importedSkill=true;preparation=packagePreparation(skill,{errors:[{field:'adversarial'}]});assert.equal(preparation.stages[0].status,'complete');assert.equal(preparation.stages[1].status,'current');assert.match(preparation.next,/fresh AI review/);
+ preparation=packagePreparation(skill,{errors:[{field:'project'},{field:'adversarial'}]});assert.equal(preparation.stages[0].status,'current');assert.equal(preparation.stages[1].status,'pending');
+});
 
 test('chapter progress distinguishes unrun, current and stale observations without inventing successful tests',()=>{
  const skill=blankProject('Example');skill.scenarios=[{id:'case',name:'Missing field',input:'No identifier',expected:'Ask for it',status:'Not tested',testedRevision:skill.revision,observations:''}];

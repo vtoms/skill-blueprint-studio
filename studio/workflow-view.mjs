@@ -29,7 +29,7 @@ export function workflowStepStatus(skill,step,checks){
 
 function wfInsideSummary(step){
   const tools=step.facets.filter(f=>f.type==='Tool').length,rules=step.facets.filter(f=>['Business rule','Decision'].includes(f.type)).length,files=step.references.length+step.resourceIds.length;
-  return [tools?`${tools} ${tools===1?'tool':'tools'}`:'',rules?`${rules} ${rules===1?'rule':'rules'}`:'',files?`${files} ${files===1?'file':'files'}`:'',`${step.facets.length} inside`].filter(Boolean).join(' · ');
+  return [tools?`${tools} ${tools===1?'tool':'tools'}`:'',rules?`${rules} ${rules===1?'rule':'rules'}`:'',files?`${files} ${files===1?'file':'files'}`:'',`${step.facets.length+files} ${step.facets.length+files===1?'item':'items'} inside`].filter(Boolean).join(' · ');
 }
 
 function wfMoveControls(step,index,count){
@@ -47,7 +47,7 @@ export function workflowStageMarkup(skill,state){
     body=`<nav class="step-rail" aria-label="Skill steps"><button type="button" class="rail-brief" data-action="project"><span class="eyebrow">STARTS WITH</span><strong>${wfEsc(skill.input||'Define the overall input')}</strong></button>${skill.steps.map((step,i)=>`<button type="button" class="rail-step ${step.id===state.selected?'selected':''}" data-step="${wfEsc(step.id)}" aria-pressed="${step.id===state.selected}"><span class="node-number">${String(i+1).padStart(2,'0')}</span><span><strong>${wfEsc(step.title||'Name this step')}</strong><span class="step-statuses">${workflowStepStatus(skill,step,state.checks)}</span></span></button>`).join('')}<button type="button" class="rail-brief rail-finish" data-action="project"><span class="eyebrow">FINISHES WITH</span><strong>${wfEsc(skill.outcome||'Define the final result')}</strong></button>${wfButton('＋ Add step','add-step','','quiet')}</nav>`;
   }
   if(!skill.steps.length)body+=`<div class="empty"><h3>Add the first meaningful step</h3><p class="small">Define what comes in, what should happen, and what comes out.</p>${wfButton('Add your first step','add-step','','primary')}</div>`;
-  return `<div class="canvas-bar"><span>${skill.steps.length} ordered ${skill.steps.length===1?'step':'steps'}${state.view==='guided'&&index>=0?` · ${index+1} selected`:''}</span><div class="flex">${skill.steps.some(step=>!step.reviewed)?wfButton('Review unconfirmed steps','review-steps'):''}${wfButton('＋ Add step','add-step')}</div></div>${body}<div class="resources-bar"><span>Reference documents</span>${skill.references.map(reference=>`<button class="ref-chip" data-reference="${wfEsc(reference.id)}">${wfEsc(reference.path.split('/').at(-1))}</button>`).join('')}${wfButton(`${skill.resources.length} supporting files`,'resources')}${wfButton('Shared values','definitions')}</div>`;
+  return `<div class="canvas-bar"><span>${skill.steps.length} ordered ${skill.steps.length===1?'step':'steps'}${state.view==='guided'&&index>=0?` · ${index+1} selected`:''}</span><div class="flex">${skill.steps.some(step=>!step.reviewed)?wfButton('Review unconfirmed steps','review-steps'):''}${wfButton('＋ Add step','add-step')}</div></div>${body}<div class="resources-bar"><span>Reference documents</span>${skill.references.map(reference=>`<button class="ref-chip" data-reference="${wfEsc(reference.id)}">${wfEsc(reference.path.split('/').at(-1))}</button>`).join('')}${wfButton(`${skill.resources.length} supporting file${skill.resources.length===1?'':'s'}`,'resources')}${wfButton('Shared values','definitions')}</div>`;
 }
 
 function wfContract(skill,step,index){
@@ -63,7 +63,7 @@ function wfFacet(skill,facet,index,count,state){
 function wfBindings(skill,step){
   const referenceRows=skill.references.map(reference=>`<label class="check-row"><input type="checkbox" data-edit="binding" data-key="references" value="${wfEsc(reference.path)}" ${step.references.includes(reference.path)?'checked':''}>${wfEsc(reference.path)}</label>`).join('');
   const resourceRows=skill.resources.map(resource=>`<label class="check-row"><input type="checkbox" data-edit="binding" data-key="resourceIds" value="${wfEsc(resource.id)}" ${step.resourceIds.includes(resource.id)?'checked':''}>${wfEsc(resource.sourcePath)}<span class="small">${resource.policy==='generate'?'English specification':'Retained asset or documentation'}</span></label>`).join('');
-  return `<section class="bound-files"><h3>Files this step uses (${step.references.length+step.resourceIds.length})</h3>${referenceRows+resourceRows||'<p class="small">Add references or resources, then attach them here.</p>'}<div class="flex">${wfButton('References','step-references')}${wfButton('Resources','step-resources')}</div></section>`;
+  return `<section class="bound-files"><h3>Files this step uses (${step.references.length+step.resourceIds.length})</h3>${referenceRows+resourceRows||'<p class="small">Add references or resources, then attach them here.</p>'}<div class="flex">${wfButton('Manage references','step-references')}${wfButton('Manage supporting files','step-resources')}</div></section>`;
 }
 
 function wfSource(skill,step){

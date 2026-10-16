@@ -77,3 +77,9 @@ An optional skill JSON field, `sourceOrigin`, distinguishes newly authored and i
 Removing an active supporting file preserves its original bytes in the project, backup and original-source download. Affected step bindings are cleared and need confirmation again. Other dependency declarations remain visible for correction. Restoring a file creates a fresh unreviewed description; original bytes are not duplicated. This is not a permanent source-deletion control.
 
 Autosave serializes the current working copy when the debounce expires or a caller flushes, not on each keystroke. Each outgoing request has a fixed serialized snapshot. Changes during a request remain pending for a later acknowledgement; failed/stale writes preserve recovery and explicit retry/reload behavior.
+
+## Imported Markdown provenance (0.10.1)
+
+Standalone Markdown imports retain exact UTF-8 source bytes in `originals` (including BOM and CRLF). An optional reference `sourcePath` points to its immutable original; an original's optional `referencePath` remembers the import destination for restoration. Editing or renaming the current document keeps the source association. Importing a removed filename again retains both source versions using a unique history path. Invalid selections are rejected before mutation.
+
+Active imported references require independent review. Removing one retains the original for recovery; an unused original alone does not gate a known authored skill. An improved version's frozen external baseline still requires review. Restoring uses the original content and import path, and never replaces an occupied active path. The SQLite schema, empty template and schema version are unchanged. Optional metadata is validated without changing old review snapshots. Older standalone imports that never retained bytes cannot be reconstructed retrospectively; re-import their original files to establish provenance.

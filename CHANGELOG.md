@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.1 — 2026-10-16
+
+- Keep Canvas handoff labels clear of shapes, reclaim overview title space, and place START in a free upper or side lane when shapes are rearranged.
+- Make mobile overview/editor panes work in all three views; bring the workbench into view when switching views and reduce repeated controls without hiding pan actions.
+- Share original-file restore actions across Rules & files and the package source dialog. Reset an emptied supporting-file category after removal when other files remain.
+- Preserve standalone imported Markdown bytes and provenance, including BOM/CRLF, edited/renamed references and repeated filenames. Require independent review for active imported references and inherited baselines; retain unused source history without relabeling an authored skill as imported.
+- Show state-specific package guidance and preparation progress; reconcile inside-item counts and singular chapter counts. Remove dead dialog branches and an unused helper.
+- Add geometry, reference lifecycle, review and touch/mobile regressions. No runtime dependency, SQLite schema/template, MIT license or review-policy version change.
+
 ## 0.10.0 — 2026-10-16
 
 - Add guided fresh-session Claude Code review with explicit provider disclosure, complete packet/schema validation, saved-revision/digest race checks, cancellation and report inspection before recording. Keep the independent gate and blocking findings; support external packet instructions, fenced JSON paste and file loading with all report errors.

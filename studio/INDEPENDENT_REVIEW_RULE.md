@@ -17,3 +17,9 @@ After local checks and confirmations are complete, the user may explicitly reque
 ## Optimized versions
 
 AI optimization is an authoring operation and cannot approve its own work. Imported derived versions require fresh independent review, including original source files, the immediate frozen optimization baseline, proposed step/facet mappings and rationale, setup questions/resolutions, and the current draft. Challenge semantic changes, wrong prerequisite order, lost conditions/approvals and mismatched resource use even when structural coverage passes. Optimization evidence is included in the review snapshot. Any later evidence or instruction changes invalidate the earlier report. Retained baseline import provenance also requires this gate.
+
+## Standalone reference documents
+
+Importing a Markdown reference also introduces external material. Its exact original bytes are retained and its current document carries a source association through edits and renames. Active imported references and derived external baselines require the same independent review. Removing the active reference leaves an unused original available for recovery without labeling a known authored skill as imported. A missing associated original is a local validation blocker. Restoring or re-importing material requires current evidence; old reports do not approve changed instructions or different bytes.
+
+Authored references remain manual authoring. This local policy cannot retrospectively identify provenance that earlier versions did not record; re-import earlier external reference files when their originals were not preserved. Reviewer identity and editable backups remain declared rather than tamper-proof.
